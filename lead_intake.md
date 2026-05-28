@@ -19,6 +19,39 @@ Tentukan species dari pesan leads. Jika tidak disebutkan eksplisit, tanya sebelu
 
 **Jika species belum jelas:** tunda semua analisis, tanyakan dulu.
 
+### Kalkulasi Estimasi Kerugian Akibat FCR Tinggi
+
+Setelah species teridentifikasi, hitung estimasi kerugian finansial akibat FCR tidak optimal berdasarkan skala kolam leads. Output wajib berupa **angka rupiah konkret** yang relevan untuk leads tersebut.
+
+**Asumsi harga pakan komersial:** Rp 9.000–12.000/kg (gunakan Rp 10.000/kg sebagai baseline).
+
+**Formula:**
+
+```
+Selisih FCR      = FCR aktual rata-rata - FCR ideal
+Bobot panen (kg) = jumlah ekor × berat panen rata-rata per ekor
+Kelebihan pakan  = Selisih FCR × Bobot panen
+Kerugian (Rp)    = Kelebihan pakan × harga pakan/kg
+```
+
+**Tabel referensi cepat per species:**
+
+| Species | FCR Ideal | FCR Aktual Rata-rata Pembudidaya | Berat Panen Rata-rata | Selisih FCR |
+|---------|-----------|----------------------------------|-----------------------|-------------|
+| NILA    | 1,3       | 1,8                              | 300 g / ekor          | 0,5         |
+| LELE    | 1,0       | 1,5                              | 100 g / ekor          | 0,5         |
+| GURAME  | 1,7       | 2,5                              | 500 g / ekor          | 0,8         |
+| MAS     | 1,7       | 2,4                              | 400 g / ekor          | 0,7         |
+| PATIN   | 1,4       | 2,0                              | 600 g / ekor          | 0,6         |
+
+**Contoh kalkulasi — NILA skala KECIL (1.000 ekor):**
+- Bobot panen: 1.000 × 0,3 kg = 300 kg
+- Kelebihan pakan: 0,5 × 300 kg = 150 kg pakan terbuang
+- Kerugian per siklus: 150 kg × Rp 10.000 = **Rp 1.500.000/siklus**
+- Kerugian per tahun (3 siklus): **Rp 4.500.000/tahun**
+
+**Instruksi output:** Angka ini digunakan sebagai *pain point* konkret dalam draft reply WA (Step 5) — bukan untuk menakut-nakuti, tapi untuk memperlihatkan nilai nyata dari optimasi FCR.
+
 ---
 
 ## Step 2 — Identifikasi Skala Kolam
@@ -118,20 +151,27 @@ Gunakan kombinasi dari Step 1–3 untuk menentukan posisi leads dalam funnel.
 - **Skala:** KECIL (1.000 ekor)
 - **Masalah Utama:** PAKAN
 - **Funnel Stage:** F1 → F2 (ada species + masalah spesifik, tapi belum ada detail lahan/modal)
+- **Estimasi Kerugian FCR Tinggi:**
+  - Bobot panen: 1.000 × 0,3 kg = 300 kg
+  - Kelebihan pakan (FCR 1,8 vs ideal 1,3): 0,5 × 300 = 150 kg terbuang
+  - Kerugian per siklus: 150 kg × Rp 10.000 = **Rp 1.500.000**
+  - Kerugian per tahun (3 siklus): **Rp 4.500.000** → angka ini digunakan di reply WA
 
 ### Draft Reply WA
 ```
 Halo, selamat datang di PPBIB! Senang sekali Bapak/Ibu sudah mulai serius merencanakan budidaya nila. 🙏
 
-Untuk skala 1.000 ekor, biaya pakan biasanya menyumbang 60–70% dari total biaya produksi. Dengan formulasi pakan mandiri yang tepat, FCR bisa dijaga di 1,2–1,5 — artinya efisiensi pakan meningkat signifikan dibanding pakai pakan komersial terus.
+Sedikit gambaran dulu — untuk skala 1.000 ekor nila, pembudidaya yang belum optimalkan formulasi pakan biasanya pakai FCR 1,8, padahal idealnya bisa 1,3. Selisihnya terlihat kecil, tapi dalam 1 siklus panen itu setara sekitar 150 kg pakan yang terbuang, atau ±Rp 1.500.000 per siklus. Kalau 3 siklus setahun, Rp 4.500.000 keluar sia-sia hanya dari inefisiensi pakan.
 
-Sebelum saya rekomendasikan formulasi yang paling pas, boleh saya tanya dulu:
+Nah, itu yang ingin kita pangkas dari awal.
+
+Supaya saya bisa rekomendasikan formulasi yang paling pas untuk kondisi Bapak/Ibu:
 
 1. Kolam yang dipakai jenis apa — tanah, terpal, atau beton?
-2. Bahan baku lokal apa yang mudah didapat di sekitar Bapak/Ibu (dedak, ampas tahu, ikan rucah, dll)?
-3. Target panen dalam berapa bulan?
+2. Bahan baku lokal apa yang mudah didapat di sekitar sini (dedak, ampas tahu, ikan rucah, dll)?
+3. Target panen dalam berapa bulan ke depan?
 
-Dari situ saya bisa bantu hitung kebutuhan pakan dan rekomendasikan langkah paling efisien.
+Dari tiga info itu saya bisa langsung bantu hitung kebutuhan dan formulasinya.
 ```
 
 ---
