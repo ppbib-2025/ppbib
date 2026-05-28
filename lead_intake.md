@@ -181,3 +181,22 @@ Dari tiga info itu saya bisa langsung bantu hitung kebutuhan dan formulasinya.
 - Jika leads menyebut masalah **KEMATIAN massal (>20% dalam 1 siklus):** eskalasikan ke konsultan senior, jangan tangani dengan template.
 - Jika leads sudah di **F4 dan tanya harga:** lanjutkan ke direktif `closing_consultation.md`.
 - Jika species **di luar 5 species utama:** catat sebagai *out-of-scope sementara*, tanya ke tim sebelum balas.
+
+---
+
+## Eskalasi ke Aditiya
+
+Langsung teruskan ke Aditiya — jangan tangani sendiri — jika leads memenuhi salah satu kondisi berikut:
+
+| Kondisi | Kriteria |
+|---------|----------|
+| **Skala besar** | Leads mengindikasikan skala MENENGAH (5.000–50.000 ekor) atau BESAR (>50.000 ekor) |
+| **Tanya harga di pesan pertama** | Leads langsung menanyakan harga program, biaya pelatihan, atau paket pendampingan sebelum ada diskusi teknis |
+| **Kematian massal** | Leads melaporkan angka kematian >30% dalam satu siklus |
+
+**Cara eskalasi:** Balas leads dengan pesan tunggu singkat, lalu forward percakapan ke Aditiya beserta ringkasan: species, skala, masalah utama, dan kutipan pesan asli leads.
+
+**Template pesan tunggu untuk leads:**
+```
+Terima kasih sudah menghubungi PPBIB. Untuk kebutuhan Bapak/Ibu, saya akan sambungkan langsung dengan konsultan senior kami agar bisa ditangani lebih tepat. Mohon tunggu sebentar ya.
+```
