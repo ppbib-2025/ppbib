@@ -102,6 +102,10 @@ Gunakan kombinasi dari Step 1–3 untuk menentukan posisi leads dalam funnel.
 - Ada species + skala + timeline → F3
 - Ada pertanyaan harga/program → F4
 
+**Aturan override:**
+- **F3 + latar belakang pemula = treat as F2.** Jika leads ada di F3 (rencana konkret) tapi sinyal pengalaman menunjukkan pemula (kata-kata seperti "baru mau mulai", "belum pernah", "mau coba-coba", tidak ada siklus panen sebelumnya), turunkan treatment ke F2. Bangun pemahaman dulu sebelum arahkan ke eksekusi.
+- **Jangan offer produk di pesan pertama**, apapun stage-nya. Termasuk F3 yang sudah siap — pesan pertama tetap konsultatif, bukan closing.
+
 ---
 
 ## Step 5 — Susun Draft Reply WA Pertama
