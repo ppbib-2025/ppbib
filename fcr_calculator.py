@@ -25,6 +25,13 @@ SKALA_LABEL = {
     "besar":    "Besar (>50.000 ekor / >2.000 m²)",
 }
 
+# Batas wajar target panen (kg) untuk skala MIKRO per species.
+# Melebihi batas ini = data tidak konsisten, perlu konfirmasi ulang ke leads.
+MIKRO_PANEN_MAX_KG: dict[str, float] = {
+    "lele":  200.0,
+    "nila":  150.0,
+}
+
 
 @dataclass
 class FCRResult:
@@ -41,6 +48,7 @@ class FCRResult:
     kerugian_per_siklus_rp: int
     penghematan_potensial_rp: int
     kesimpulan: str
+    warning: str
 
 
 def hitung_fcr(
@@ -93,6 +101,16 @@ def hitung_fcr(
             f"per siklus — setara {rp(kerugian_rp)} yang bisa dihemat jika FCR turun ke {fcr_ideal_tengah}."
         )
 
+    warning = ""
+    if skala == "mikro" and species in MIKRO_PANEN_MAX_KG:
+        batas = MIKRO_PANEN_MAX_KG[species]
+        if target_panen_kg > batas:
+            warning = (
+                f"⚠ Data tidak konsisten — target panen {target_panen_kg:.0f} kg "
+                f"melebihi batas wajar skala Mikro untuk {bench['label']} ({batas:.0f} kg). "
+                f"Konfirmasi ulang skala kolam ke leads sebelum kirim reply."
+            )
+
     return FCRResult(
         species=bench["label"],
         skala=SKALA_LABEL[skala],
@@ -107,6 +125,7 @@ def hitung_fcr(
         kerugian_per_siklus_rp=kerugian_rp,
         penghematan_potensial_rp=penghematan_rp,
         kesimpulan=kesimpulan,
+        warning=warning,
     )
 
 
@@ -152,6 +171,8 @@ def print_laporan(result: FCRResult) -> None:
     print(sep)
     print(f"  KESIMPULAN    : {result.kesimpulan}")
     print(sep)
+    if result.warning:
+        print(f"\n  {result.warning}\n")
     print("\n  [TEKS WA]\n")
     print(format_for_wa(result))
     print()
