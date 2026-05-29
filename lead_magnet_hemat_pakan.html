@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulasi Hemat Pakan Gurameh & Patin — PPBIB</title>
+<style>
+  /* ── PRINT / PDF LAYOUT ─────────────────────────────────── */
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    color: #1a2233;
+    background: #fff;
+    line-height: 1.4;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, #0d6e3f 0%, #1a9b5e 100%);
+    color: #fff;
+    padding: 10px 14px 8px;
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left h1 {
+    font-size: 14pt;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+  }
+  .header-left p {
+    font-size: 8.5pt;
+    opacity: 0.88;
+    margin-top: 2px;
+  }
+  .badge {
+    background: #ffcc00;
+    color: #1a2233;
+    font-size: 7.5pt;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .badge span { display: block; font-size: 9pt; }
+
+  /* ── HOOK BAR ────────────────────────────────────────────── */
+  .hook {
+    background: #fff8e1;
+    border-left: 4px solid #ffcc00;
+    padding: 7px 12px;
+    font-size: 9pt;
+    color: #4a3000;
+    margin: 8px 0;
+  }
+  .hook strong { color: #c0392b; }
+
+  /* ── TWO-COLUMN FISH CARDS ───────────────────────────────── */
+  .cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .fish-card {
+    border: 1.5px solid #d0e8d8;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .fish-card .card-header {
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fish-card.gurame .card-header { background: #e8f5ee; }
+  .fish-card.patin  .card-header { background: #e8f0ff; border-color: #c5d5f5; }
+  .fish-card.patin  { border-color: #c5d5f5; }
+
+  .fish-icon {
+    font-size: 18pt;
+    line-height: 1;
+  }
+  .fish-name {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0d4d2a;
+  }
+  .fish-card.patin .fish-name { color: #1a3575; }
+  .fish-latin {
+    font-size: 7pt;
+    font-style: italic;
+    color: #666;
+  }
+
+  .fcr-strip {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid #d0e8d8;
+  }
+  .fish-card.patin .fcr-strip { border-color: #c5d5f5; }
+  .fcr-box {
+    flex: 1;
+    text-align: center;
+    padding: 5px 4px;
+    border-right: 1px solid #d0e8d8;
+    font-size: 8pt;
+  }
+  .fish-card.patin .fcr-box { border-color: #c5d5f5; }
+  .fcr-box:last-child { border-right: none; }
+  .fcr-box .val {
+    font-size: 11pt;
+    font-weight: 800;
+    display: block;
+  }
+  .fcr-box.ideal .val  { color: #0d6e3f; }
+  .fcr-box.actual .val { color: #c0392b; }
+  .fcr-box.label-sm    { font-size: 7pt; color: #666; }
+
+  /* ── LOSS TABLE ──────────────────────────────────────────── */
+  .card-body { padding: 7px 10px 8px; }
+
+  .card-body h4 {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #555;
+    margin-bottom: 5px;
+  }
+
+  table.loss-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+  }
+  table.loss-table th {
+    background: #f4f7f5;
+    padding: 4px 5px;
+    text-align: left;
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #444;
+    border-bottom: 1.5px solid #cde0d4;
+  }
+  .fish-card.patin table.loss-table th {
+    background: #f0f4ff;
+    border-color: #c5d5f5;
+  }
+  table.loss-table td {
+    padding: 4px 5px;
+    border-bottom: 1px solid #e8f0ec;
+    vertical-align: middle;
+  }
+  .fish-card.patin table.loss-table td { border-color: #e5ecff; }
+  table.loss-table tr:last-child td { border-bottom: none; }
+  .loss-val { font-weight: 700; color: #c0392b; }
+  .save-val { font-weight: 700; color: #0d6e3f; }
+  .skala-tag {
+    display: inline-block;
+    font-size: 7pt;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: #e0f0e8;
+    color: #0d4d2a;
+  }
+  .fish-card.patin .skala-tag { background: #ddeaff; color: #1a3575; }
+
+  /* ── FORMULA SECTION ─────────────────────────────────────── */
+  .formula-section {
+    margin-bottom: 8px;
+    background: #f9fafb;
+    border: 1px solid #dde4ec;
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 10px;
+    align-items: start;
+  }
+  .formula-section h3 {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #0d4d2a;
+    margin-bottom: 5px;
+    grid-column: 1 / -1;
+  }
+  .formula-box {
+    background: #fff;
+    border: 1.5px dashed #0d6e3f;
+    border-radius: 5px;
+    padding: 6px 9px;
+    font-family: 'Courier New', monospace;
+    font-size: 8.5pt;
+    color: #0d4d2a;
+    line-height: 1.7;
+  }
+  .formula-box .var { color: #1a3575; font-weight: 700; }
+  .formula-box .comment { color: #888; font-size: 7.5pt; }
+
+  .steps-list {
+    padding-left: 0;
+    list-style: none;
+  }
+  .steps-list li {
+    font-size: 8pt;
+    padding: 2px 0 2px 16px;
+    position: relative;
+    color: #333;
+  }
+  .steps-list li::before {
+    content: attr(data-n);
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: #0d6e3f;
+    font-size: 8pt;
+  }
+
+  /* ── BOTTOM ROW ──────────────────────────────────────────── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 8px;
+  }
+
+  /* ── WHAT YOU GAIN ───────────────────────────────────────── */
+  .gains-box {
+    border: 1.5px solid #d0e8d8;
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .gains-box h3 {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #0d4d2a;
+    margin-bottom: 5px;
+  }
+  .gains-list {
+    list-style: none;
+    padding: 0;
+  }
+  .gains-list li {
+    font-size: 8.5pt;
+    padding: 2px 0 2px 16px;
+    position: relative;
+    color: #333;
+  }
+  .gains-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #0d6e3f;
+    font-weight: 700;
+  }
+
+  /* ── CTA BOX ─────────────────────────────────────────────── */
+  .cta-box {
+    background: linear-gradient(135deg, #0d6e3f 0%, #1a9b5e 100%);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: #fff;
+    text-align: center;
+  }
+  .cta-box .cta-title {
+    font-size: 10pt;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .cta-box .cta-sub {
+    font-size: 8pt;
+    opacity: 0.9;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .cta-wa {
+    background: #25d366;
+    color: #fff;
+    font-size: 10pt;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+  }
+  .cta-box .cta-note {
+    font-size: 7pt;
+    opacity: 0.8;
+  }
+  .cta-box .cta-free {
+    font-size: 8pt;
+    background: #ffcc00;
+    color: #1a2233;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+
+  /* ── FOOTER ──────────────────────────────────────────────── */
+  .footer {
+    margin-top: 7px;
+    text-align: center;
+    font-size: 7pt;
+    color: #999;
+    border-top: 1px solid #e8e8e8;
+    padding-top: 5px;
+  }
+  .footer strong { color: #0d6e3f; }
+
+  /* ── SCREEN PREVIEW ONLY (tidak ikut print) ──────────────── */
+  @media screen {
+    body {
+      padding: 20px;
+      background: #e8ecf0;
+    }
+    .page-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 24px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      border-radius: 8px;
+    }
+  }
+  @media print {
+    .page-wrap { padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Berapa Uang yang Terbuang dari Kolam Anda?</h1>
+      <p>Kalkulasi Nyata Pemborosan Pakan — Gurameh &amp; Patin</p>
+    </div>
+    <div class="badge">
+      GRATIS<br>
+      <span>oleh <strong>PPBIB</strong></span>
+    </div>
+  </div>
+
+  <!-- HOOK -->
+  <div class="hook">
+    Rata-rata petani gurameh kehilangan <strong>Rp 5–25 juta per siklus</strong> hanya karena FCR tidak optimal.
+    Patin lebih efisien, tapi tetap bisa bocor <strong>Rp 4–20 juta</strong> jika manajemen pakan diabaikan.
+    <strong>Hitung dulu, baru putuskan.</strong>
+  </div>
+
+  <!-- FISH CARDS -->
+  <div class="cards-row">
+
+    <!-- GURAMEH CARD -->
+    <div class="fish-card gurame">
+      <div class="card-header">
+        <div class="fish-icon">🐟</div>
+        <div>
+          <div class="fish-name">Gurameh</div>
+          <div class="fish-latin">Osphronemus goramy</div>
+        </div>
+      </div>
+      <div class="fcr-strip">
+        <div class="fcr-box ideal">
+          <span class="val">1,5–1,8</span>
+          <span class="label-sm">FCR Ideal</span>
+        </div>
+        <div class="fcr-box actual">
+          <span class="val">2,3–2,7</span>
+          <span class="label-sm">FCR Rata-rata Petani</span>
+        </div>
+        <div class="fcr-box">
+          <span class="val" style="color:#c0392b">+0,7–1,0</span>
+          <span class="label-sm">Selisih (pemborosan)</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <h4>Estimasi Kerugian &amp; Potensi Hemat</h4>
+        <table class="loss-table">
+          <thead>
+            <tr>
+              <th>Skala</th>
+              <th>Target Panen</th>
+              <th>Kerugian/Siklus</th>
+              <th>Bisa Hemat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="skala-tag">Kecil</span></td>
+              <td>500 kg</td>
+              <td class="loss-val">Rp 5.100.000</td>
+              <td class="save-val">Rp 5,1 jt</td>
+            </tr>
+            <tr>
+              <td><span class="skala-tag">Menengah</span></td>
+              <td>2.500 kg</td>
+              <td class="loss-val">Rp 25.500.000</td>
+              <td class="save-val">Rp 25,5 jt</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:7pt; color:#888; margin-top:4px;">
+          * Asumsi FCR aktual 2,5 vs ideal 1,65 · harga pakan Rp 12.000/kg · 1 siklus ≈ 8–10 bln
+        </p>
+      </div>
+    </div>
+
+    <!-- PATIN CARD -->
+    <div class="fish-card patin">
+      <div class="card-header">
+        <div class="fish-icon">🐠</div>
+        <div>
+          <div class="fish-name">Patin</div>
+          <div class="fish-latin">Pangasius sp.</div>
+        </div>
+      </div>
+      <div class="fcr-strip">
+        <div class="fcr-box ideal">
+          <span class="val">1,2–1,5</span>
+          <span class="label-sm">FCR Ideal</span>
+        </div>
+        <div class="fcr-box actual">
+          <span class="val">1,8–2,2</span>
+          <span class="label-sm">FCR Rata-rata Petani</span>
+        </div>
+        <div class="fcr-box">
+          <span class="val" style="color:#c0392b">+0,5–0,8</span>
+          <span class="label-sm">Selisih (pemborosan)</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <h4>Estimasi Kerugian &amp; Potensi Hemat</h4>
+        <table class="loss-table">
+          <thead>
+            <tr>
+              <th>Skala</th>
+              <th>Target Panen</th>
+              <th>Kerugian/Siklus</th>
+              <th>Bisa Hemat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="skala-tag">Kecil</span></td>
+              <td>600 kg</td>
+              <td class="loss-val">Rp 3.900.000</td>
+              <td class="save-val">Rp 3,9 jt</td>
+            </tr>
+            <tr>
+              <td><span class="skala-tag">Menengah</span></td>
+              <td>3.000 kg</td>
+              <td class="loss-val">Rp 19.500.000</td>
+              <td class="save-val">Rp 19,5 jt</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:7pt; color:#888; margin-top:4px;">
+          * Asumsi FCR aktual 2,0 vs ideal 1,35 · harga pakan Rp 10.000/kg · 1 siklus ≈ 5–7 bln
+        </p>
+      </div>
+    </div>
+
+  </div><!-- end cards-row -->
+
+  <!-- FORMULA SECTION -->
+  <div class="formula-section">
+    <h3>Hitung Sendiri — Rumus 30 Detik</h3>
+    <div>
+      <div class="formula-box">
+        <span class="var">Pemborosan (kg)</span> =<br>
+        &nbsp;&nbsp;(<span class="var">FCR_aktual</span> − <span class="var">FCR_ideal</span>) × <span class="var">Panen_kg</span>
+        <br><br>
+        <span class="var">Kerugian (Rp)</span> =<br>
+        &nbsp;&nbsp;<span class="var">Pemborosan_kg</span> × <span class="var">Harga_pakan/kg</span>
+        <br><br>
+        <span class="comment">— FCR ideal gurameh: 1,65 | patin: 1,35</span>
+      </div>
+    </div>
+    <div>
+      <p style="font-size:8pt; font-weight:600; color:#444; margin-bottom:5px;">Contoh Cepat (Patin, 1.000 kg):</p>
+      <ul class="steps-list">
+        <li data-n="①">FCR aktual kamu: <strong>2,0</strong></li>
+        <li data-n="②">Selisih: 2,0 − 1,35 = <strong>0,65</strong></li>
+        <li data-n="③">Boros: 0,65 × 1.000 = <strong>650 kg</strong> pakan</li>
+        <li data-n="④">Rugi: 650 × Rp 10.000 = <strong style="color:#c0392b">Rp 6.500.000</strong>/siklus</li>
+        <li data-n="⑤">3 siklus/tahun → rugi <strong style="color:#c0392b">Rp 19,5 jt</strong>/tahun</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="bottom-row">
+
+    <div class="gains-box">
+      <h3>Apa yang Bisa Diperbaiki dengan Pelatihan PPBIB?</h3>
+      <ul class="gains-list">
+        <li>Teknik pemberian pakan yang efisien (waktu &amp; dosis tepat)</li>
+        <li>Pemilihan pakan berkualitas sesuai ukuran &amp; fase tumbuh</li>
+        <li>Manajemen kualitas air agar nafsu makan tetap optimal</li>
+        <li>Monitoring FCR harian dengan form sederhana</li>
+        <li>Studi kasus nyata: petani binaan turun FCR 30–45%</li>
+      </ul>
+    </div>
+
+    <div class="cta-box">
+      <div class="cta-title">Mau Tahu FCR Aktual Kolam Anda?</div>
+      <div class="cta-sub">Konsultasi gratis 15 menit bersama<br>konsultan PPBIB via WhatsApp</div>
+      <div class="cta-wa">📲 Chat PPBIB Sekarang</div>
+      <div class="cta-note">Balas "HITUNG FCR" ke nomor di bawah</div>
+      <div class="cta-free">GRATIS · Tanpa Syarat</div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <strong>PPBIB</strong> — Pusat Pelatihan Budidaya Ikan Berbasis Inovasi &nbsp;|&nbsp;
+    Dokumen ini dibagikan gratis untuk para petani ikan Indonesia &nbsp;|&nbsp;
+    Data FCR berdasarkan benchmark lapangan nasional 2024–2025
+  </div>
+
+</div><!-- end page-wrap -->
+</body>
+</html>
