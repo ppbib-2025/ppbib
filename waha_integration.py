@@ -1,6 +1,6 @@
 """
-PPBIB WhatsApp Webhook — WAHA + Anthropic
-Terima pesan WA via WAHA, proses dengan Claude, kirim reply balik.
+PPBIB WhatsApp Webhook — WAHA + OpenAI
+Terima pesan WA via WAHA, proses dengan GPT-4o-mini, kirim reply balik.
 """
 
 import json
@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
+import openai
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -22,7 +22,7 @@ load_dotenv()
 WAHA_URL     = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
 WAHA_API_KEY = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
 WAHA_SESSION = os.getenv("WAHA_SESSION", "default")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 RATE_LIMIT_SECONDS = 300        # 5 menit per nomor
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
@@ -82,18 +82,18 @@ def append_history(nomor: str, role: str, content: str) -> None:
 def get_history(nomor: str) -> list[dict]:
     return conversation_history.get(nomor, [])
 
-# ── Anthropic ─────────────────────────────────────────────────────────────────
+# ── OpenAI ────────────────────────────────────────────────────────────────────
 
-def get_claude_reply(nomor: str, pesan: str) -> str:
+def get_ai_reply(nomor: str, pesan: str) -> str:
     append_history(nomor, "user", pesan)
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
+    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + get_history(nomor)
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=get_history(nomor),
+        messages=messages,
     )
-    reply = response.content[0].text.strip()
+    reply = response.choices[0].message.content.strip()
     append_history(nomor, "assistant", reply)
     return reply
 
@@ -162,7 +162,7 @@ def health():
         "waha_url": WAHA_URL,
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
-        "anthropic_key_set": bool(ANTHROPIC_API_KEY),
+        "openai_key_set": bool(OPENAI_API_KEY),
         "leads_logged": _count_logs(),
     })
 
@@ -198,12 +198,12 @@ def webhook():
         logger.info("Rate limited: %s", nomor)
         return jsonify({"status": "rate_limited", "nomor": nomor}), 200
 
-    # Dapatkan reply dari Claude
+    # Dapatkan reply dari OpenAI
     try:
-        reply = get_claude_reply(nomor, teks)
+        reply = get_ai_reply(nomor, teks)
     except Exception as e:
-        logger.error("Error Anthropic API: %s", e)
-        return jsonify({"status": "error", "detail": "anthropic api error"}), 500
+        logger.error("Error OpenAI API: %s", e)
+        return jsonify({"status": "error", "detail": "openai api error"}), 500
 
     # Kirim reply via WAHA
     terkirim = kirim_pesan_wa(nomor, reply)
