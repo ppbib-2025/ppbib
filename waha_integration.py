@@ -26,7 +26,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_MODEL    = "llama-3.1-8b-instant"
 
-RATE_LIMIT_SECONDS = 300        # 5 menit per nomor
+RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
 LOG_FILE           = Path(__file__).parent / "leads_log.json"
 SYSTEM_PROMPT_FILES = [
