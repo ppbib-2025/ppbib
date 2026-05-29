@@ -1,6 +1,6 @@
 """
-PPBIB WhatsApp Webhook — WAHA + OpenRouter (Gemini Flash)
-Terima pesan WA via WAHA, proses dengan Gemini 2.0 Flash gratis, kirim reply balik.
+PPBIB WhatsApp Webhook — WAHA + Google Gemini Flash
+Terima pesan WA via WAHA, proses dengan Gemini 2.0 Flash langsung dari Google, kirim reply balik.
 """
 
 import json
@@ -22,9 +22,9 @@ load_dotenv()
 WAHA_URL     = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
 WAHA_API_KEY = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
 WAHA_SESSION = os.getenv("WAHA_SESSION", "default")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-OPENROUTER_MODEL    = "google/gemini-2.0-flash-exp:free"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+GEMINI_MODEL    = "gemini-2.0-flash"
 
 RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
@@ -84,18 +84,14 @@ def append_history(nomor: str, role: str, content: str) -> None:
 def get_history(nomor: str) -> list[dict]:
     return conversation_history.get(nomor, [])
 
-# ── OpenRouter ────────────────────────────────────────────────────────────────
+# ── Google Gemini ─────────────────────────────────────────────────────────────
 
 def get_ai_reply(nomor: str, pesan: str) -> str:
     append_history(nomor, "user", pesan)
-    client = openai.OpenAI(
-        api_key=OPENROUTER_API_KEY,
-        base_url=OPENROUTER_BASE_URL,
-        default_headers={"HTTP-Referer": "https://ppbib-production.up.railway.app"},
-    )
+    client = openai.OpenAI(api_key=GEMINI_API_KEY, base_url=GEMINI_BASE_URL)
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + get_history(nomor)
     response = client.chat.completions.create(
-        model=OPENROUTER_MODEL,
+        model=GEMINI_MODEL,
         max_tokens=1024,
         messages=messages,
     )
@@ -168,7 +164,7 @@ def health():
         "waha_url": WAHA_URL,
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
-        "openrouter_key_set": bool(OPENROUTER_API_KEY),
+        "gemini_key_set": bool(GEMINI_API_KEY),
         "leads_logged": _count_logs(),
     })
 
