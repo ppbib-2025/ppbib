@@ -1,6 +1,6 @@
 """
-PPBIB WhatsApp Webhook — WAHA + OpenAI
-Terima pesan WA via WAHA, proses dengan GPT-4o-mini, kirim reply balik.
+PPBIB WhatsApp Webhook — WAHA + Groq
+Terima pesan WA via WAHA, proses dengan Groq (llama-3.1-8b-instant), kirim reply balik.
 """
 
 import json
@@ -22,7 +22,9 @@ load_dotenv()
 WAHA_URL     = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
 WAHA_API_KEY = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
 WAHA_SESSION = os.getenv("WAHA_SESSION", "default")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+GROQ_MODEL    = "llama-3.1-8b-instant"
 
 RATE_LIMIT_SECONDS = 300        # 5 menit per nomor
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
@@ -82,14 +84,14 @@ def append_history(nomor: str, role: str, content: str) -> None:
 def get_history(nomor: str) -> list[dict]:
     return conversation_history.get(nomor, [])
 
-# ── OpenAI ────────────────────────────────────────────────────────────────────
+# ── Groq ──────────────────────────────────────────────────────────────────────
 
 def get_ai_reply(nomor: str, pesan: str) -> str:
     append_history(nomor, "user", pesan)
-    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+    client = openai.OpenAI(api_key=GROQ_API_KEY, base_url=GROQ_BASE_URL)
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + get_history(nomor)
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=GROQ_MODEL,
         max_tokens=1024,
         messages=messages,
     )
@@ -162,7 +164,7 @@ def health():
         "waha_url": WAHA_URL,
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
-        "openai_key_set": bool(OPENAI_API_KEY),
+        "groq_key_set": bool(GROQ_API_KEY),
         "leads_logged": _count_logs(),
     })
 
@@ -202,8 +204,8 @@ def webhook():
     try:
         reply = get_ai_reply(nomor, teks)
     except Exception as e:
-        logger.error("Error OpenAI API: %s", e)
-        return jsonify({"status": "error", "detail": "openai api error"}), 500
+        logger.error("Error Groq API: %s", e)
+        return jsonify({"status": "error", "detail": "groq api error"}), 500
 
     # Kirim reply via WAHA
     terkirim = kirim_pesan_wa(nomor, reply)
