@@ -1,6 +1,6 @@
 """
-PPBIB WhatsApp Webhook — WAHA + Groq
-Terima pesan WA via WAHA, proses dengan Groq (llama-3.1-8b-instant), kirim reply balik.
+PPBIB WhatsApp Webhook — WAHA + OpenRouter (Gemini Flash)
+Terima pesan WA via WAHA, proses dengan Gemini 2.0 Flash gratis, kirim reply balik.
 """
 
 import json
@@ -22,9 +22,9 @@ load_dotenv()
 WAHA_URL     = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
 WAHA_API_KEY = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
 WAHA_SESSION = os.getenv("WAHA_SESSION", "default")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-GROQ_MODEL    = "llama-3.1-8b-instant"
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_MODEL    = "google/gemini-2.0-flash-exp:free"
 
 RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
@@ -84,14 +84,18 @@ def append_history(nomor: str, role: str, content: str) -> None:
 def get_history(nomor: str) -> list[dict]:
     return conversation_history.get(nomor, [])
 
-# ── Groq ──────────────────────────────────────────────────────────────────────
+# ── OpenRouter ────────────────────────────────────────────────────────────────
 
 def get_ai_reply(nomor: str, pesan: str) -> str:
     append_history(nomor, "user", pesan)
-    client = openai.OpenAI(api_key=GROQ_API_KEY, base_url=GROQ_BASE_URL)
+    client = openai.OpenAI(
+        api_key=OPENROUTER_API_KEY,
+        base_url=OPENROUTER_BASE_URL,
+        default_headers={"HTTP-Referer": "https://ppbib-production.up.railway.app"},
+    )
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + get_history(nomor)
     response = client.chat.completions.create(
-        model=GROQ_MODEL,
+        model=OPENROUTER_MODEL,
         max_tokens=1024,
         messages=messages,
     )
@@ -164,7 +168,7 @@ def health():
         "waha_url": WAHA_URL,
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
-        "groq_key_set": bool(GROQ_API_KEY),
+        "openrouter_key_set": bool(OPENROUTER_API_KEY),
         "leads_logged": _count_logs(),
     })
 
