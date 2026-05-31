@@ -30,8 +30,8 @@ RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakap
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
 LOG_FILE           = Path(__file__).parent / "leads_log.json"
 SYSTEM_PROMPT_FILES = [
-    Path(__file__).parent / "ppbib_agents.md",
-    Path(__file__).parent / "leads_flow.md",
+    Path(__file__).parent / "agents" / "ppbib_agents.md",
+    Path(__file__).parent / "agents" / "leads_flow.md",
 ]
 
 # ── Logging ───────────────────────────────────────────────────────────────────
