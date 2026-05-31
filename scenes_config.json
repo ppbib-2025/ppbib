@@ -1,0 +1,122 @@
+{
+  "drive": {
+    "root_folder_id": "12J4Y9ZJY3oLrnY6TEfCd751xSimgKnZz",
+    "footage_folder_id": "1ndlZtO486_lP8TSCwlXE_fuZVdAan_JW",
+    "categories": {
+      "kolam_dan_air": {
+        "folder_id": "13rODaJi3ZjdvBvGmd3TPzVIfGWycvWHI",
+        "label": "Kolam & Air",
+        "description": "Tampilan kolam, permukaan air, kondisi air"
+      },
+      "pakan_dan_pelet": {
+        "folder_id": "1g-eKbVv7RDSlCxw9wcmkTehctPKqAj7e",
+        "label": "Pakan & Pelet",
+        "description": "Pelet masuk air, proses mixing pakan, gudang pakan"
+      },
+      "ikan_makan": {
+        "folder_id": null,
+        "name_prefix": "ikan_makan",
+        "label": "Ikan Makan",
+        "description": "Ikan makan, respon ikan terhadap pakan"
+      }
+    },
+    "exclude_prefixes": ["snaptik_", "[DLBunny", "VID-"]
+  },
+
+  "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "crf": 23,
+    "preset": "fast"
+  },
+
+  "scene_types": {
+    "hook": {
+      "description": "Opening 3–5 detik yang bikin penasaran",
+      "preferred_categories": ["ikan_makan", "kolam_dan_air"],
+      "default_duration": 4,
+      "has_text": true
+    },
+    "establishing": {
+      "description": "Perkenalan suasana kolam/farm",
+      "preferred_categories": ["kolam_dan_air"],
+      "default_duration": 5,
+      "has_text": false
+    },
+    "action": {
+      "description": "Aksi utama: pemberian pakan, panen, aktivitas kolam",
+      "preferred_categories": ["pakan_dan_pelet", "ikan_makan", "kolam_dan_air"],
+      "default_duration": 8,
+      "has_text": false
+    },
+    "detail": {
+      "description": "Close-up detail: pelet masuk air, gerakan ikan",
+      "preferred_categories": ["pakan_dan_pelet", "ikan_makan"],
+      "default_duration": 5,
+      "has_text": false
+    },
+    "cta": {
+      "description": "Call to action akhir video",
+      "preferred_categories": ["kolam_dan_air", "ikan_makan"],
+      "default_duration": 3,
+      "has_text": true
+    }
+  },
+
+  "templates": {
+    "feeding_day": {
+      "title": "Hari Pemberian Pakan",
+      "niche": "budidaya_ikan",
+      "structure": ["hook", "establishing", "action", "detail", "cta"],
+      "topic_hints": ["waktu makan ikan", "pakan berkualitas", "teknik pemberian pakan"]
+    },
+    "water_check": {
+      "title": "Cek Kondisi Air",
+      "niche": "budidaya_ikan",
+      "structure": ["hook", "establishing", "establishing", "cta"],
+      "topic_hints": ["kualitas air kolam", "air jernih", "parameter air budidaya"]
+    },
+    "pellet_showcase": {
+      "title": "Showcase Pelet & Pakan",
+      "niche": "budidaya_ikan",
+      "structure": ["hook", "detail", "action", "cta"],
+      "topic_hints": ["pelet ikan terbaik", "nutrisi pakan", "pelet tenggelam vs apung"]
+    },
+    "harvest_time": {
+      "title": "Waktu Panen",
+      "niche": "budidaya_ikan",
+      "structure": ["hook", "action", "action", "cta"],
+      "topic_hints": ["panen ikan", "hasil budidaya", "untung budidaya ikan"]
+    },
+    "farm_tour": {
+      "title": "Tour Kolam",
+      "niche": "budidaya_ikan",
+      "structure": ["hook", "establishing", "action", "detail"],
+      "topic_hints": ["lihat kolam kami", "setup budidaya", "fasilitas ternak ikan"]
+    }
+  },
+
+  "hashtag_pools": {
+    "core": [
+      "#budidayaikan", "#ternakikan", "#kolamikan",
+      "#petaniikan", "#agribisnis", "#budidaya"
+    ],
+    "feeding": [
+      "#pakanikan", "#peletikan", "#makanikan",
+      "#waktumakan", "#ikanlapar"
+    ],
+    "water": [
+      "#kolamair", "#airkolam", "#kualitasair",
+      "#airjernihkolam"
+    ],
+    "harvest": [
+      "#panenikan", "#hasilternak", "#untungbudidaya",
+      "#panenraya"
+    ],
+    "general": [
+      "#tiktokpetani", "#kontenpertanian", "#viral",
+      "#fyp", "#fypシ", "#indonesia"
+    ]
+  }
+}
