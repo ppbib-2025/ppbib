@@ -42,6 +42,55 @@ def _save_used_clips(used: list[str], new_clips: list[str]) -> None:
         json.dump(combined, f, ensure_ascii=False, indent=2)
 
 
+def _save_naskah(plan: dict, output_dir: Path, target_date: str) -> Path:
+    path = output_dir / "naskah.txt"
+    lines = [
+        "NASKAH KONTEN TIKTOK",
+        f"Tanggal  : {target_date}",
+        f"Template : {plan.get('template', '—')}",
+        f"Judul    : {plan.get('title', '—')}",
+        "",
+        f"HOOK PEMBUKA (tampil di layar): \"{plan.get('hook_text', '')}\"",
+        "",
+        "=" * 52,
+    ]
+
+    for i, scene in enumerate(plan.get("scenes", []), 1):
+        scene_type = scene.get("scene_type", "scene").upper()
+        clip = scene.get("clip_name") or scene.get("clip", "—")
+        duration = scene.get("duration_seconds", "?")
+        on_screen = scene.get("on_screen_text")
+        voiceover = scene.get("voiceover", "")
+
+        lines += [
+            f"",
+            f"SCENE {i} — {scene_type} ({duration} detik)",
+            f"Klip     : {clip}",
+        ]
+        if on_screen:
+            lines.append(f"Di layar : \"{on_screen}\"")
+        lines += [
+            f"",
+            f"NARASI/VOICEOVER:",
+            f'"{voiceover}"',
+            "",
+            "-" * 52,
+        ]
+
+    lines += [
+        "",
+        "=" * 52,
+        "CAPTION TIKTOK:",
+        "",
+        plan.get("caption", ""),
+        "",
+        " ".join(plan.get("hashtags", [])),
+    ]
+
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
 def _save_caption(plan: dict, output_dir: Path) -> Path:
     path = output_dir / "caption.txt"
     hashtags = " ".join(plan.get("hashtags", []))
@@ -116,12 +165,14 @@ def run(target_date: str | None = None, dry_run: bool = False) -> None:
 
     plan_file = _save_plan(plan, output_dir)
     caption_file = _save_caption(plan, output_dir)
+    naskah_file = _save_naskah(plan, output_dir, today)
     print(f"      Plan saved: {plan_file}")
+    print(f"      Naskah    : {naskah_file}")
     print(f"      Caption   : {caption_file}\n")
 
     if dry_run:
-        print("─── DRY RUN — Caption Preview ───")
-        print(caption_file.read_text(encoding="utf-8"))
+        print("─── DRY RUN — Naskah Preview ────")
+        print(naskah_file.read_text(encoding="utf-8"))
         print("─────────────────────────────────")
         print("\n[DRY RUN] Skipping video download and processing.")
         return
@@ -144,6 +195,7 @@ def run(target_date: str | None = None, dry_run: bool = False) -> None:
     print(f"  Done! Output → {output_dir.absolute()}")
     print(f"{'='*50}")
     print(f"  Video   : {video_path.name} ({size_mb:.1f} MB)")
+    print(f"  Naskah  : {naskah_file.name}")
     print(f"  Caption : {caption_file.name}")
     print(f"  Plan    : {plan_file.name}")
     print()

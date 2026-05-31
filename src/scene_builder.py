@@ -44,7 +44,8 @@ def build_video(
         duration = float(scene.get("duration_seconds", 5))
         scene_type = scene.get("scene_type", "")
 
-        text_overlay = scene.get("text_overlay")
+        # Use on_screen_text for video overlay; fall back to hook_text / default CTA
+        text_overlay = scene.get("on_screen_text") or scene.get("text_overlay")
         if scene_type == "hook" and not text_overlay:
             text_overlay = hook_text or None
         elif scene_type == "cta" and not text_overlay:

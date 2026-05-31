@@ -10,7 +10,11 @@ SYSTEM_PROMPT = """Kamu adalah content planner TikTok yang ahli di niche budiday
 
 Target audiens: petani ikan, pemula budidaya, penggemar agribisnis.
 Gaya konten: edukatif, engaging, sedikit santai — seperti petani yang berbagi pengalaman nyata.
-Bahasa: Indonesia yang natural, sesekali pakai istilah teknis (tapi tetap mudah dipahami).
+Bahasa: Indonesia formal-santai, natural, sesekali pakai istilah teknis (tapi tetap mudah dipahami).
+
+Untuk setiap scene kamu membuat DUA hal:
+1. ON-SCREEN TEXT: teks singkat yang tampil di layar video (max 8 kata, impactful)
+2. VOICEOVER: narasi yang dibacakan oleh pembuat konten saat scene berjalan (1-3 kalimat natural)
 
 Kamu tahu apa yang viral di TikTok: hook kuat di 3 detik pertama, visual yang memukau, CTA yang jelas."""
 
@@ -61,23 +65,27 @@ Tipe scene yang tersedia:
 Tugas kamu:
 1. Pilih template yang paling cocok untuk hari ini
 2. Susun urutan scene sesuai template
-3. Pilih klip terbaik untuk tiap scene (pilih klip yang BELUM pernah dipakai jika memungkinkan)
-4. Tulis hook text yang bikin orang langsung nonton (max 7 kata)
-5. Tulis caption TikTok yang engaging (max 150 kata, gunakan emoji)
-6. Tentukan hashtag (10-15 hashtag)
+3. Pilih klip terbaik untuk tiap scene (pilih klip BELUM dipakai jika memungkinkan)
+4. Tulis hook_text: kalimat pembuka yang bikin penasaran (max 7 kata, tampil di video)
+5. Untuk tiap scene, tulis:
+   - on_screen_text: teks singkat tampil di layar (max 8 kata, atau null jika tidak perlu)
+   - voiceover: narasi yang dibacakan saat scene itu berjalan (1-3 kalimat, natural dan engaging)
+6. Tulis caption TikTok yang engaging (max 150 kata, gunakan emoji)
+7. Tentukan hashtag (10-15 hashtag)
 
 Format jawaban HANYA JSON berikut (tanpa teks lain):
 {{
   "template": "nama_template",
   "title": "judul internal konten hari ini",
-  "hook_text": "teks hook maks 7 kata",
+  "hook_text": "kalimat hook maks 7 kata",
   "scenes": [
     {{
       "scene_type": "hook",
       "clip_name": "nama_klip.mp4",
       "category": "kategori_klip",
       "duration_seconds": 4,
-      "text_overlay": "teks di video atau null"
+      "on_screen_text": "teks singkat di video atau null",
+      "voiceover": "narasi yang dibacakan saat scene ini berjalan"
     }}
   ],
   "caption": "caption TikTok lengkap dengan emoji",
@@ -86,7 +94,7 @@ Format jawaban HANYA JSON berikut (tanpa teks lain):
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1500,
+        max_tokens=2000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
