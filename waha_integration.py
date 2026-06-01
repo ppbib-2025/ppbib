@@ -6,6 +6,7 @@ Terima pesan WA via WAHA, proses dengan Claude, kirim reply balik.
 import json
 import logging
 import os
+import random
 import time
 from datetime import datetime
 from pathlib import Path
@@ -27,6 +28,8 @@ DINOIKI_BASE_URL = "https://ai.dinoiki.com/v1"
 CLAUDE_MODEL    = "claude-sonnet-4-6"
 
 RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
+REPLY_DELAY_MIN    = int(os.getenv("REPLY_DELAY_MIN", "4"))   # detik minimum jeda
+REPLY_DELAY_MAX    = int(os.getenv("REPLY_DELAY_MAX", "9"))   # detik maksimum jeda
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
 LOG_FILE           = Path(__file__).parent / "leads_log.json"
 
@@ -248,6 +251,11 @@ def webhook():
     except Exception as e:
         logger.error("Error Claude API: %s", e)
         return jsonify({"status": "error", "detail": "claude api error"}), 500
+
+    # Jeda acak sebelum kirim — biar terasa lebih human
+    delay = random.uniform(REPLY_DELAY_MIN, REPLY_DELAY_MAX)
+    logger.info("Jeda %.1f detik sebelum kirim ke %s", delay, nomor)
+    time.sleep(delay)
 
     # Kirim reply via WAHA
     terkirim = kirim_pesan_wa(nomor, reply)
