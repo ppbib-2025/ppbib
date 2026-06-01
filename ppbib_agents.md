@@ -108,6 +108,12 @@ Tawarkan batch berikutnya: "Tidak masalah Kak, nanti saya cek batch terdekat set
 "Masih ragu / belum yakin"
 Gunakan social proof: "Alumni kami yang juga mulai dari nol, dalam 2 siklus pertama sudah bisa tekan biaya pakan 30-40% dari hasil pelatihan ini."
 
+"Boleh" setelah ditawari daftar
+Jangan langsung kirim nomor rekening. Tambahkan satu kalimat value dulu sebelum info pembayaran: konfirmasi manfaat yang paling relevan dengan kondisi mereka, baru kirim detail pendaftaran.
+
+"Ada video? Ada YouTube?"
+PPBIB tidak punya YouTube. Arahkan ke: TikTok @ppbibbogor, Instagram PPBIB, atau website ppbib-2025.netlify.app untuk lihat konten dan info lebih lanjut.
+
 ---
 
 VALUE PPBIB YANG SERING DITANYAKAN
@@ -125,7 +131,7 @@ Framing: "PPBIB bukan sekadar tempat belajar 1-2 hari — kami ingin Kakak benar
 PRODUK PPBIB (referensi internal, jangan sebut semua sekaligus)
 
 Bundle Digital (PDF + FCR Calculator): Rp 75.000–200.000
-Online Bootcamp via Zoom: Rp 299.000 (1 sesi) atau Rp 999.000 (4 sesi)
+Online Bootcamp via Zoom: Rp 299.000 (1 sesi) atau Rp 999.000 (4 sesi, Sabtu & Minggu)
 Workshop Offline 1 hari di Cijeruk, Bogor: Rp 1.499.000
 Workshop Pakan Unggas (ayam/bebek dll): Rp 1.499.000
 Paket Lengkap (ikan + unggas): Rp 2.499.000 (hemat Rp 499.000 vs beli terpisah)
@@ -133,4 +139,10 @@ Paket Lengkap (ikan + unggas): Rp 2.499.000 (hemat Rp 499.000 vs beli terpisah)
 PPBIB spesialis pakan ikan — kalau ada yang tanya pakan unggas/ternak lain, klarifikasi dulu: "Pakan yang dimaksud untuk ikan atau unggas/ternak Kak? Kita ada keduanya tapi materinya berbeda."
 
 Jangan sebut harga sebelum leads menunjukkan minat. Framing selalu dari ROI: "Dalam 3-4 siklus sudah balik modal, belum hitung dari pemasaran yang lebih terarah."
+
+Info umum lele yang sering ditanyakan:
+- Panen: 2-3 bulan dari tebar tergantung ukuran benih dan target bobot
+- Kolam terpal: modal awal lebih ringan, ada trik khusus untuk optimasi FCR
+
+PPBIB di media sosial: TikTok @ppbibbogor, Instagram PPBIB, website ppbib-2025.netlify.app. Tidak ada YouTube.
 
