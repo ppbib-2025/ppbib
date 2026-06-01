@@ -29,6 +29,14 @@ CLAUDE_MODEL    = "claude-sonnet-4-6"
 RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
 LOG_FILE           = Path(__file__).parent / "leads_log.json"
+
+# Nomor yang dikecualikan dari auto-reply (teman, keluarga, dll)
+# Format di env: "6281234567890,6289876543210" (tanpa @c.us)
+_raw_excluded = os.getenv("EXCLUDED_NUMBERS", "")
+EXCLUDED_NUMBERS: set[str] = {
+    n.strip().lstrip("+").replace("-", "") + "@c.us"
+    for n in _raw_excluded.split(",") if n.strip()
+}
 SYSTEM_PROMPT_FILES = [
     Path(__file__).parent / "ppbib_agents.md",
     Path(__file__).parent / "leads_flow.md",
@@ -180,6 +188,11 @@ def webhook():
     payload = data.get("payload", {})
     nomor   = payload.get("from", "")
     teks    = payload.get("body", "").strip()
+
+    # Filter: nomor dikecualikan (teman/keluarga)
+    if nomor in EXCLUDED_NUMBERS:
+        logger.info("Nomor dikecualikan: %s", nomor)
+        return jsonify({"status": "ignored", "reason": "nomor dikecualikan"}), 200
 
     # Filter: abaikan pesan grup
     if "@g.us" in nomor:
