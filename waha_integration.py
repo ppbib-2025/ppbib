@@ -24,7 +24,7 @@ WAHA_API_KEY    = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
 WAHA_SESSION    = os.getenv("WAHA_SESSION", "default")
 DINOIKI_API_KEY = os.getenv("DINOIKI_API_KEY", "")
 DINOIKI_BASE_URL = "https://ai.dinoiki.com/v1"
-CLAUDE_MODEL    = "claude-haiku-4-5"
+CLAUDE_MODEL    = "claude-sonnet-4-6"
 
 RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
