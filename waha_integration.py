@@ -1,6 +1,6 @@
 """
-PPBIB WhatsApp Webhook — WAHA + Google Gemini Flash
-Terima pesan WA via WAHA, proses dengan Gemini 2.0 Flash langsung dari Google, kirim reply balik.
+PPBIB WhatsApp Webhook — WAHA + Claude (Anthropic)
+Terima pesan WA via WAHA, proses dengan Claude, kirim reply balik.
 """
 
 import json
@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import openai
+import anthropic
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -19,12 +19,11 @@ load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-WAHA_URL     = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
-WAHA_API_KEY = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
-WAHA_SESSION = os.getenv("WAHA_SESSION", "default")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-GEMINI_MODEL    = "gemini-2.0-flash"
+WAHA_URL          = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
+WAHA_API_KEY      = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
+WAHA_SESSION      = os.getenv("WAHA_SESSION", "default")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+CLAUDE_MODEL      = "claude-haiku-4-5-20251001"
 
 RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
@@ -84,18 +83,18 @@ def append_history(nomor: str, role: str, content: str) -> None:
 def get_history(nomor: str) -> list[dict]:
     return conversation_history.get(nomor, [])
 
-# ── Google Gemini ─────────────────────────────────────────────────────────────
+# ── Claude (Anthropic) ────────────────────────────────────────────────────────
 
 def get_ai_reply(nomor: str, pesan: str) -> str:
     append_history(nomor, "user", pesan)
-    client = openai.OpenAI(api_key=GEMINI_API_KEY, base_url=GEMINI_BASE_URL)
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + get_history(nomor)
-    response = client.chat.completions.create(
-        model=GEMINI_MODEL,
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    response = client.messages.create(
+        model=CLAUDE_MODEL,
         max_tokens=1024,
-        messages=messages,
+        system=SYSTEM_PROMPT,
+        messages=get_history(nomor),
     )
-    reply = response.choices[0].message.content.strip()
+    reply = response.content[0].text.strip()
     append_history(nomor, "assistant", reply)
     return reply
 
@@ -164,7 +163,7 @@ def health():
         "waha_url": WAHA_URL,
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
-        "gemini_key_set": bool(GEMINI_API_KEY),
+        "claude_key_set": bool(ANTHROPIC_API_KEY),
         "leads_logged": _count_logs(),
     })
 
@@ -200,12 +199,11 @@ def webhook():
         logger.info("Rate limited: %s", nomor)
         return jsonify({"status": "rate_limited", "nomor": nomor}), 200
 
-    # Dapatkan reply dari OpenAI
     try:
         reply = get_ai_reply(nomor, teks)
     except Exception as e:
-        logger.error("Error Groq API: %s", e)
-        return jsonify({"status": "error", "detail": "groq api error"}), 500
+        logger.error("Error Claude API: %s", e)
+        return jsonify({"status": "error", "detail": "claude api error"}), 500
 
     # Kirim reply via WAHA
     terkirim = kirim_pesan_wa(nomor, reply)
