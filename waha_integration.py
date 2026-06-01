@@ -1,5 +1,5 @@
 """
-PPBIB WhatsApp Webhook — WAHA + Claude (Anthropic)
+PPBIB WhatsApp Webhook — WAHA + Claude via Dinoiki
 Terima pesan WA via WAHA, proses dengan Claude, kirim reply balik.
 """
 
@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
+import openai
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -19,11 +19,12 @@ load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-WAHA_URL          = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
-WAHA_API_KEY      = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
-WAHA_SESSION      = os.getenv("WAHA_SESSION", "default")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL      = "claude-haiku-4-5-20251001"
+WAHA_URL        = os.getenv("WAHA_URL",    "https://waha-qelypbwuouqo.cgk-srikandi.sumopod.my.id")
+WAHA_API_KEY    = os.getenv("WAHA_API_KEY", "pYYp3LKM09t6yHulcUarEWtSIWdPDHkL")
+WAHA_SESSION    = os.getenv("WAHA_SESSION", "default")
+DINOIKI_API_KEY = os.getenv("DINOIKI_API_KEY", "")
+DINOIKI_BASE_URL = "https://ai.dinoiki.com/v1"
+CLAUDE_MODEL    = "claude-haiku-4-5"
 
 RATE_LIMIT_SECONDS = 3           # cegah duplikat webhook, bukan batasi percakapan
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
@@ -83,18 +84,18 @@ def append_history(nomor: str, role: str, content: str) -> None:
 def get_history(nomor: str) -> list[dict]:
     return conversation_history.get(nomor, [])
 
-# ── Claude (Anthropic) ────────────────────────────────────────────────────────
+# ── Claude via Dinoiki ────────────────────────────────────────────────────────
 
 def get_ai_reply(nomor: str, pesan: str) -> str:
     append_history(nomor, "user", pesan)
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    response = client.messages.create(
+    client = openai.OpenAI(api_key=DINOIKI_API_KEY, base_url=DINOIKI_BASE_URL)
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + get_history(nomor)
+    response = client.chat.completions.create(
         model=CLAUDE_MODEL,
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=get_history(nomor),
+        messages=messages,
     )
-    reply = response.content[0].text.strip()
+    reply = response.choices[0].message.content.strip()
     append_history(nomor, "assistant", reply)
     return reply
 
@@ -163,7 +164,7 @@ def health():
         "waha_url": WAHA_URL,
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
-        "claude_key_set": bool(ANTHROPIC_API_KEY),
+        "dinoiki_key_set": bool(DINOIKI_API_KEY),
         "leads_logged": _count_logs(),
     })
 
