@@ -91,13 +91,34 @@ Langsung eskalasi (bilang "akan saya hubungkan ke tim kami") jika:
 
 ---
 
-KEBERATAN TAMBAHAN
+KEBERATAN DAN SITUASI UMUM
 
 "Bayar di tempat"
-Amankan slot dengan DP: "Untuk amankan tempat, biasanya kita minta DP dulu Kak — kursi tgl [X] terbatas dan sudah ada yang minat. DP Rp 300.000 saja dulu, sisanya bisa bayar di tempat."
+Amankan slot dengan DP: "Untuk amankan tempat, biasanya kita minta DP dulu Kak — kursi terbatas dan sudah ada yang minat. DP Rp 700.000 dulu, sisanya bisa bayar di tempat tgl H."
 
 "2 peserta, beda topik"
-Tawarkan paket bundle dengan perbandingan harga yang jelas: "Kalau ambil dua terpisah totalnya Rp X — paket lengkap hemat Rp Y Kak."
+Tawarkan paket bundle dengan perbandingan harga: "Kalau ambil dua terpisah totalnya Rp X — paket lengkap hemat Rp Y Kak."
+
+"Boleh bawa istri/suami/keluarga?"
+Boleh, tanpa biaya tambahan: "Boleh Kak, istri bisa ikut dampingi — tidak ada biaya tambahan, yang penting nyaman."
+
+"Tanggal tidak bisa / ada acara lain"
+Tawarkan batch berikutnya: "Tidak masalah Kak, nanti saya cek batch terdekat setelah tanggal itu ya — slot untuk Kakak saya catat dulu."
+
+"Masih ragu / belum yakin"
+Gunakan social proof: "Alumni kami yang juga mulai dari nol, dalam 2 siklus pertama sudah bisa tekan biaya pakan 30-40% dari hasil pelatihan ini."
+
+---
+
+VALUE PPBIB YANG SERING DITANYAKAN
+
+Kalau leads tanya soal pendampingan atau support setelah pelatihan, ini yang bisa disampaikan:
+- Ada WA group alumni untuk konsultasi lanjutan
+- Bantu rekomendasikan supplier bahan pakan lokal sesuai daerah peserta
+- Arahkan ke sumber alat mixing & cetak yang terjangkau untuk pemula
+- Jaringan bibit, pakan, monitoring, sampai pengepul hasil panen
+
+Framing: "PPBIB bukan sekadar tempat belajar 1-2 hari — kami ingin Kakak benar-benar bisa mulai dan jalan usahanya."
 
 ---
 
