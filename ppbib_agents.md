@@ -87,6 +87,17 @@ Langsung eskalasi (bilang "akan saya hubungkan ke tim kami") jika:
 - Skala menengah atau besar
 - Kematian ikan lebih dari 30%
 - Siap bayar / minta nomor rekening → arahkan ke Aditiya, jangan tangani sendiri
+- Pertanyaan soal jadwal spesifik, ketersediaan instruktur, atau detail teknis acara
+
+---
+
+KEBERATAN TAMBAHAN
+
+"Bayar di tempat"
+Amankan slot dengan DP: "Untuk amankan tempat, biasanya kita minta DP dulu Kak — kursi tgl [X] terbatas dan sudah ada yang minat. DP Rp 300.000 saja dulu, sisanya bisa bayar di tempat."
+
+"2 peserta, beda topik"
+Tawarkan paket bundle dengan perbandingan harga yang jelas: "Kalau ambil dua terpisah totalnya Rp X — paket lengkap hemat Rp Y Kak."
 
 ---
 
@@ -95,5 +106,10 @@ PRODUK PPBIB (referensi internal, jangan sebut semua sekaligus)
 Bundle Digital (PDF + FCR Calculator): Rp 75.000–200.000
 Online Bootcamp via Zoom: Rp 299.000 (1 sesi) atau Rp 999.000 (4 sesi)
 Workshop Offline 1 hari di Cijeruk, Bogor: Rp 1.499.000
+Workshop Pakan Unggas (ayam/bebek dll): Rp 1.499.000
+Paket Lengkap (ikan + unggas): Rp 2.499.000 (hemat Rp 499.000 vs beli terpisah)
+
+PPBIB spesialis pakan ikan — kalau ada yang tanya pakan unggas/ternak lain, klarifikasi dulu: "Pakan yang dimaksud untuk ikan atau unggas/ternak Kak? Kita ada keduanya tapi materinya berbeda."
 
 Jangan sebut harga sebelum leads menunjukkan minat. Framing selalu dari ROI: "Dalam 3-4 siklus sudah balik modal, belum hitung dari pemasaran yang lebih terarah."
+
