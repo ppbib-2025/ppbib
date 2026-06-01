@@ -33,6 +33,9 @@ REPLY_DELAY_MAX    = int(os.getenv("REPLY_DELAY_MAX", "9"))   # detik maksimum j
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
 LOG_FILE           = Path(__file__).parent / "leads_log.json"
 
+# On/off switch — set BOT_ENABLED=false di Railway untuk pause bot
+BOT_ENABLED = os.getenv("BOT_ENABLED", "true").strip().lower() == "true"
+
 # Nomor yang dikecualikan dari auto-reply (teman, keluarga, dll)
 # Format di env: "6281234567890,6289876543210" (tanpa @c.us)
 _raw_excluded = os.getenv("EXCLUDED_NUMBERS", "")
@@ -191,6 +194,7 @@ app = Flask(__name__)
 def health():
     return jsonify({
         "status": "ok",
+        "bot_enabled": BOT_ENABLED,
         "waha_url": WAHA_URL,
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
@@ -201,6 +205,9 @@ def health():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    if not BOT_ENABLED:
+        return jsonify({"status": "paused", "reason": "bot dinonaktifkan"}), 200
+
     data = request.get_json(silent=True) or {}
 
     # Filter: hanya proses event type "message"
