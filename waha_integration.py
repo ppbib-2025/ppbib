@@ -50,6 +50,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+SERVER_START_TIME = time.time()  # abaikan pesan lama sebelum server nyala
+
 # ── In-memory state ───────────────────────────────────────────────────────────
 
 # { nomor: last_reply_timestamp }
@@ -205,6 +207,12 @@ def webhook():
     # Filter: pesan dari diri sendiri (status broadcast, dll)
     if payload.get("fromMe"):
         return jsonify({"status": "ignored", "reason": "pesan dari bot sendiri"}), 200
+
+    # Filter: pesan lama (sebelum server nyala) — hindari replay saat WAHA reconnect
+    msg_timestamp = payload.get("timestamp", 0)
+    if msg_timestamp and msg_timestamp < SERVER_START_TIME:
+        logger.info("Pesan lama diabaikan dari %s (ts=%s)", nomor, msg_timestamp)
+        return jsonify({"status": "ignored", "reason": "pesan lama"}), 200
 
     logger.info("Pesan masuk dari %s: %s", nomor, teks[:80])
 
