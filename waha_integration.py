@@ -111,6 +111,23 @@ def get_ai_reply(nomor: str, pesan: str) -> str:
 
 # ── WAHA sender ───────────────────────────────────────────────────────────────
 
+def is_saved_contact(nomor: str) -> bool:
+    """Cek apakah nomor sudah tersimpan di kontak (punya nama di address book)."""
+    try:
+        url = f"{WAHA_URL.rstrip('/')}/api/contacts"
+        headers = {"X-Api-Key": WAHA_API_KEY}
+        params = {"contactId": nomor, "session": WAHA_SESSION}
+        resp = requests.get(url, headers=headers, params=params, timeout=5)
+        if resp.status_code != 200:
+            return False
+        contact = resp.json()
+        name = contact.get("name", "") or ""
+        # Kontak tersimpan punya nama yang bukan sekadar angka/nomor telepon
+        return bool(name) and not name.replace("+", "").replace(" ", "").replace("-", "").isdigit()
+    except Exception as e:
+        logger.warning("Gagal cek kontak %s: %s", nomor, e)
+        return False  # Kalau gagal cek, proses normal saja
+
 def kirim_pesan_wa(nomor: str, teks: str) -> bool:
     url = f"{WAHA_URL.rstrip('/')}/api/sendText"
     headers = {
@@ -191,10 +208,15 @@ def webhook():
     nomor   = payload.get("from", "")
     teks    = payload.get("body", "").strip()
 
-    # Filter: nomor dikecualikan (teman/keluarga)
+    # Filter: nomor dikecualikan manual (teman/keluarga)
     if nomor in EXCLUDED_NUMBERS:
-        logger.info("Nomor dikecualikan: %s", nomor)
+        logger.info("Nomor dikecualikan manual: %s", nomor)
         return jsonify({"status": "ignored", "reason": "nomor dikecualikan"}), 200
+
+    # Filter: kontak tersimpan (ada nama di address book = bukan leads asing)
+    if is_saved_contact(nomor):
+        logger.info("Kontak tersimpan diabaikan: %s", nomor)
+        return jsonify({"status": "ignored", "reason": "kontak tersimpan"}), 200
 
     # Filter: abaikan pesan grup
     if "@g.us" in nomor:
