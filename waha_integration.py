@@ -34,7 +34,7 @@ MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
 LOG_FILE           = Path(__file__).parent / "leads_log.json"
 
 # On/off switch — set BOT_ENABLED=false di Railway untuk pause bot
-BOT_ENABLED = os.getenv("BOT_ENABLED", "true").strip().lower() == "true"
+BOT_ENABLED = os.getenv("BOT_ENABLED", "false").strip().lower() == "true"
 
 # Nomor yang dikecualikan dari auto-reply (teman, keluarga, dll)
 # Format di env: "6281234567890,6289876543210" (tanpa @c.us)
