@@ -1,7 +1,12 @@
 import requests
-from src.tiktok_auth import load_token, refresh_token
+from src.tiktok_auth import load_token
 
 BASE = "https://open.tiktokapis.com/v2"
+
+VIDEO_FIELDS = (
+    "id,title,video_description,create_time,"
+    "view_count,like_count,comment_count,share_count,duration"
+)
 
 
 def _headers():
@@ -11,12 +16,12 @@ def _headers():
     return {"Authorization": f"Bearer {token['access_token']}"}
 
 
-def get_my_videos() -> list:
+def get_my_videos(max_count: int = 20) -> list:
     resp = requests.post(
         f"{BASE}/video/list/",
         headers=_headers(),
-        json={"max_count": 20},
-        params={"fields": "id,title,create_time,comment_count"},
+        json={"max_count": max_count},
+        params={"fields": VIDEO_FIELDS},
     )
     data = resp.json()
     return data.get("data", {}).get("videos", [])
