@@ -32,9 +32,12 @@ REPLY_DELAY_MIN    = int(os.getenv("REPLY_DELAY_MIN", "4"))   # detik minimum je
 REPLY_DELAY_MAX    = int(os.getenv("REPLY_DELAY_MAX", "9"))   # detik maksimum jeda
 MAX_HISTORY        = 10         # pesan terakhir yang disimpan per nomor
 LOG_FILE           = Path(__file__).parent / "leads_log.json"
+DRAFT_LOG_FILE     = Path(__file__).parent / "draft_replies.json"
 
-# On/off switch — set BOT_ENABLED=false di Railway untuk pause bot
-BOT_ENABLED = os.getenv("BOT_ENABLED", "false").strip().lower() == "true"
+# On/off switch
+BOT_ENABLED  = os.getenv("BOT_ENABLED",  "false").strip().lower() == "true"
+# Learning mode: baca + generate reply tapi tidak kirim, simpan ke draft_replies.json
+BOT_LEARNING = os.getenv("BOT_LEARNING", "false").strip().lower() == "true"
 
 # Nomor yang dikecualikan dari auto-reply (teman, keluarga, dll)
 # Format di env: "6281234567890,6289876543210" (tanpa @c.us)
@@ -156,6 +159,24 @@ def kirim_pesan_wa(nomor: str, teks: str) -> bool:
 
 # ── Logger ke JSON ────────────────────────────────────────────────────────────
 
+def log_draft(nomor: str, pesan_masuk: str, draft_reply: str, funnel_stage: str = "unknown") -> None:
+    entry = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "nomor": nomor,
+        "pesan_masuk": pesan_masuk,
+        "draft_reply": draft_reply,
+        "funnel_stage": funnel_stage,
+        "status": "draft_tidak_terkirim",
+    }
+    existing: list[dict] = []
+    if DRAFT_LOG_FILE.exists():
+        try:
+            existing = json.loads(DRAFT_LOG_FILE.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            existing = []
+    existing.append(entry)
+    DRAFT_LOG_FILE.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+
 def log_leads(nomor: str, pesan_masuk: str, reply: str, funnel_stage: str = "unknown") -> None:
     entry = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -199,13 +220,15 @@ def health():
         "waha_session": WAHA_SESSION,
         "system_prompt_loaded": bool(SYSTEM_PROMPT),
         "dinoiki_key_set": bool(DINOIKI_API_KEY),
+        "bot_learning": BOT_LEARNING,
         "leads_logged": _count_logs(),
+        "drafts_logged": _count_drafts(),
     })
 
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    if not BOT_ENABLED:
+    if not BOT_ENABLED and not BOT_LEARNING:
         return jsonify({"status": "paused", "reason": "bot dinonaktifkan"}), 200
 
     data = request.get_json(silent=True) or {}
@@ -259,6 +282,14 @@ def webhook():
         logger.error("Error Claude API: %s", e)
         return jsonify({"status": "error", "detail": "claude api error"}), 500
 
+    funnel = deteksi_funnel_stage(teks)
+
+    # Learning mode — simpan draft, jangan kirim
+    if BOT_LEARNING:
+        log_draft(nomor, teks, reply, funnel)
+        logger.info("Learning mode: draft disimpan untuk %s", nomor)
+        return jsonify({"status": "learning", "nomor": nomor, "funnel_stage": funnel}), 200
+
     # Jeda acak sebelum kirim — biar terasa lebih human
     delay = random.uniform(REPLY_DELAY_MIN, REPLY_DELAY_MAX)
     logger.info("Jeda %.1f detik sebelum kirim ke %s", delay, nomor)
@@ -270,7 +301,6 @@ def webhook():
         update_rate_limit(nomor)
 
     # Log ke file
-    funnel = deteksi_funnel_stage(teks)
     log_leads(nomor, teks, reply, funnel)
 
     return jsonify({
@@ -286,6 +316,15 @@ def _count_logs() -> int:
         return 0
     try:
         return len(json.loads(LOG_FILE.read_text(encoding="utf-8")))
+    except (json.JSONDecodeError, OSError):
+        return 0
+
+
+def _count_drafts() -> int:
+    if not DRAFT_LOG_FILE.exists():
+        return 0
+    try:
+        return len(json.loads(DRAFT_LOG_FILE.read_text(encoding="utf-8")))
     except (json.JSONDecodeError, OSError):
         return 0
 
