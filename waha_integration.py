@@ -37,7 +37,7 @@ DRAFT_LOG_FILE     = Path(__file__).parent / "draft_replies.json"
 # On/off switch
 BOT_ENABLED  = os.getenv("BOT_ENABLED",  "false").strip().lower() == "true"
 # Learning mode: baca + generate reply tapi tidak kirim, simpan ke draft_replies.json
-BOT_LEARNING = os.getenv("BOT_LEARNING", "false").strip().lower() == "true"
+BOT_LEARNING = os.getenv("BOT_LEARNING", "true").strip().lower() == "true"
 
 # Nomor yang dikecualikan dari auto-reply (teman, keluarga, dll)
 # Format di env: "6281234567890,6289876543210" (tanpa @c.us)
