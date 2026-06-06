@@ -1,43 +1,57 @@
 """
-Video Producer — pipeline: script → visual prompt → Higgsfield → video siap upload.
-Dijalankan tiap hari setelah konten reminder (jam 08:00).
+Video Producer — pipeline: script → storyboard → Seedance 2.0 → MP4 siap upload.
+
+Alur:
+  1. Ambil script hari ini dari content_queue.json
+  2. Claude convert script narasi → storyboard 5 shot (Cut scene to...)
+  3. Submit ke Seedance 2.0 via fal.ai
+  4. Download MP4 ke data/videos/
+  5. Kirim notifikasi WA
 """
 import os
 from datetime import datetime
 from anthropic import Anthropic
-from src.higgsfield_api import generate_video, wait_for_completion, download_video
+from src.seedance_api import generate_video, download_video
 from src.content_generator import get_todays_content
 
 client = Anthropic()
 VIDEO_DIR = "data/videos"
 
-# Gaya visual default untuk konten PPBIB (bisa dioverride per konten)
-DEFAULT_STYLE = "documentary"
-DEFAULT_DURATION = 8  # detik, cukup untuk B-roll TikTok
 
-
-def script_to_visual_prompt(script: str, topic: str, hook: str) -> str:
+def script_to_storyboard(script: str, topic: str, hook: str) -> str:
     """
-    Konversi script narasi Bahasa Indonesia ke prompt visual Inggris
-    yang optimal untuk Higgsfield video generation.
-    Script = apa yang diucapkan. Prompt = apa yang terlihat di kamera.
+    Convert script narasi Bahasa Indonesia ke storyboard prompt Inggris
+    format Seedance: deskripsi per shot dipisah 'Cut scene to'.
+
+    Script = apa yang DIUCAPKAN.
+    Storyboard = apa yang TERLIHAT di kamera, shot per shot.
     """
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=200,
+        max_tokens=400,
         messages=[{
             "role": "user",
-            "content": (
-                f"Convert this Indonesian duck farming video script into a visual prompt "
-                f"for Higgsfield AI video generator. Write in English, max 80 words.\n\n"
-                f"Topic: {topic}\n"
-                f"Hook: {hook}\n"
-                f"Script: {script[:300]}\n\n"
-                "Focus on: Indonesian rural setting, duck farm scenes, "
-                "farmers working, ducks eating/walking, golden hour lighting. "
-                "Describe what the CAMERA SEES, not what is spoken. "
-                "Start with the main visual scene."
-            ),
+            "content": f"""Convert this Indonesian duck farming video script into a 5-shot storyboard prompt for Seedance 2.0 AI video generator.
+
+Topic: {topic}
+Hook: {hook}
+Script: {script}
+
+Rules:
+- Write in English only
+- Exactly 5 shots separated by "Cut scene to"
+- Each shot = what the CAMERA SEES, not what is spoken
+- Setting: Indonesian rural duck farm, warm natural lighting
+- Shot structure:
+  Shot 1 (hook visual): attention-grabbing opening scene
+  Shot 2 (problem): show the challenge/pain point
+  Shot 3 (solution): show the process/solution
+  Shot 4 (result): show positive outcome with numbers/proof
+  Shot 5 (CTA): farmer smiling, call-to-action moment
+- Keep each shot description under 25 words
+- NO narration text, NO subtitles in description
+
+Output only the prompt, no explanation:"""
         }]
     )
     return message.content[0].text.strip()
@@ -45,35 +59,32 @@ def script_to_visual_prompt(script: str, topic: str, hook: str) -> str:
 
 def produce_video(video_content: dict) -> dict:
     """
-    Generate 1 video dari konten dict (dari content_queue.json).
-    Return dict info video yang sudah jadi.
+    Generate 1 video dari konten dict.
+    Return info lengkap video yang sudah jadi.
     """
     topic = video_content["topic"]
     script = video_content["script"]
     hook = video_content["hook"]
 
-    print(f"[VideoProducer] Mulai produksi: {topic}")
+    print(f"[VideoProducer] Produksi: {topic}")
 
-    # 1. Convert script → visual prompt
-    visual_prompt = script_to_visual_prompt(script, topic, hook)
-    print(f"[VideoProducer] Prompt: {visual_prompt}")
+    # 1. Convert script → storyboard prompt
+    storyboard = script_to_storyboard(script, topic, hook)
+    print(f"[VideoProducer] Storyboard:\n{storyboard}")
 
-    # 2. Submit ke Higgsfield
-    job_id = generate_video(
-        prompt=visual_prompt,
-        duration=DEFAULT_DURATION,
+    # 2. Generate di Seedance 2.0
+    video_url = generate_video(
+        storyboard_prompt=storyboard,
+        duration="10",
         aspect_ratio="9:16",
-        style=DEFAULT_STYLE,
+        resolution="720p",
+        generate_audio=True,
     )
 
-    # 3. Tunggu render selesai
-    video_url = wait_for_completion(job_id, timeout=600)
-
-    # 4. Download MP4
+    # 3. Download MP4
     date_str = datetime.now().strftime("%Y%m%d")
     safe_topic = topic[:25].replace(" ", "_").replace("/", "-")
-    filename = f"{date_str}_{safe_topic}.mp4"
-    save_path = os.path.join(VIDEO_DIR, filename)
+    save_path = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}.mp4")
     download_video(video_url, save_path)
 
     return {
@@ -83,17 +94,14 @@ def produce_video(video_content: dict) -> dict:
         "caption": video_content.get("caption", ""),
         "hashtags": video_content.get("hashtags", []),
         "cta": video_content.get("cta", ""),
-        "visual_prompt": visual_prompt,
+        "storyboard": storyboard,
+        "video_url": video_url,
         "video_path": save_path,
-        "job_id": job_id,
     }
 
 
 def produce_todays_video() -> dict:
-    """
-    Ambil konten hari ini dari queue, generate videonya.
-    Dipanggil dari scheduler harian jam 08:00.
-    """
+    """Ambil konten hari ini dari queue dan generate videonya."""
     content = get_todays_content()
     if not content or "video" not in content:
         print("[VideoProducer] Tidak ada video terjadwal hari ini.")
@@ -102,8 +110,9 @@ def produce_todays_video() -> dict:
 
 
 def format_video_ready_wa(info: dict) -> str:
-    """Pesan WA notifikasi video siap upload."""
+    """Notifikasi WA: video siap + caption + script lengkap."""
     hashtag_str = " ".join(info.get("hashtags", []))
+    storyboard_preview = info.get("storyboard", "")[:200] + "..."
     lines = [
         "✅ *Video Siap Upload!*",
         f"\U0001f3ac {info['topic']}",
@@ -114,13 +123,16 @@ def format_video_ready_wa(info: dict) -> str:
         info["caption"],
         "",
         hashtag_str,
-        "",
         f"*CTA:* {info['cta']}",
         "",
         "─" * 30,
         "*SCRIPT voiceover:*",
         f"\U0001fab4 Hook: {info['hook']}",
         info["script"],
+        "",
+        "─" * 30,
+        "*Storyboard Seedance:*",
+        storyboard_preview,
         "",
         "_Upload ke TikTok + IG Reels + FB Reels_",
     ]
