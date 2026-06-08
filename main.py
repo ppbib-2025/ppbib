@@ -1,8 +1,10 @@
 """
 Entry point: jalankan dengan `python main.py`
+Railway: Flask sebagai web server utama, scheduler di background thread.
 """
 import os
 import threading
+import time
 
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
@@ -15,30 +17,50 @@ from src.delivery import run_delivery
 from src.tiktok_auth import get_auth_url, load_token
 
 WA_NUMBER = os.getenv("WHATSAPP_NUMBER", "")
+PORT = int(os.getenv("PORT", 5000))
 
-# ── Flask app untuk menerima incoming WA dari Node.js ─────────────────────────
 flask_app = Flask(__name__)
 
 
-@flask_app.route("/ai-reply", methods=["POST"])
-def ai_reply():
-    data = request.get_json()
-    phone = data.get("phone", "")
-    message = data.get("message", "")
-    if not phone or not message:
-        return jsonify({"error": "phone dan message wajib"}), 400
+# ── Webhook WAHA: terima pesan WA masuk ───────────────────────────────────────
+@flask_app.route("/webhook/waha", methods=["POST"])
+def waha_webhook():
+    """
+    WAHA mengirim POST ke sini setiap ada pesan masuk.
+    Set webhook URL di dashboard WAHA: https://app-kamu.railway.app/webhook/waha
+    """
+    data = request.get_json(silent=True) or {}
+    event = data.get("event", "")
+
+    if event != "message":
+        return jsonify({"ok": True})
+
+    payload = data.get("payload", {})
+    from_id = payload.get("from", "")       # format: 628xxx@c.us
+    body = payload.get("body", "").strip()
+    msg_type = payload.get("type", "")
+
+    # Abaikan pesan dari grup dan non-teks
+    if "@g.us" in from_id or not body or msg_type != "chat":
+        return jsonify({"ok": True})
+
+    phone = from_id.replace("@c.us", "")
+
+    print(f"[WA IN] {phone}: {body[:60]}")
     try:
-        response = handle_incoming_wa(phone, message)
-        return jsonify({"success": True, "response": response})
+        threading.Thread(
+            target=handle_incoming_wa, args=(phone, body), daemon=True
+        ).start()
     except Exception as e:
-        print(f"[Flask] Error ai-reply: {e}")
-        return jsonify({"error": str(e)}), 500
+        print(f"[WA IN] Error: {e}")
+
+    return jsonify({"ok": True})
 
 
+# ── Mark paid (manual / dari payment gateway) ─────────────────────────────────
 @flask_app.route("/mark-paid", methods=["POST"])
 def mark_paid_endpoint():
-    """Endpoint untuk menandai lead sebagai sudah bayar (panggil manual/dari payment gateway)."""
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username", "")
     phone = data.get("phone", "")
     if not username:
@@ -48,32 +70,37 @@ def mark_paid_endpoint():
     return jsonify({"success": True, "message": f"{username} ditandai sebagai paid"})
 
 
+# ── Dashboard status leads ─────────────────────────────────────────────────────
 @flask_app.route("/status", methods=["GET"])
 def status():
     from src.crm import load_leads
+    from src.whatsapp import is_wa_connected
     leads = load_leads()
     summary = {}
     for lead in leads.values():
         s = lead["status"]
         summary[s] = summary.get(s, 0) + 1
-    return jsonify({"total_leads": len(leads), "by_status": summary})
+    return jsonify({
+        "total_leads": len(leads),
+        "by_status": summary,
+        "wa_connected": is_wa_connected(),
+    })
 
 
-def run_flask():
-    flask_app.run(host="0.0.0.0", port=5000, use_reloader=False)
+@flask_app.route("/", methods=["GET"])
+def home():
+    return jsonify({"service": "PPBIB Bot", "status": "running"})
 
 
-# ── Scheduler jobs ─────────────────────────────────────────────────────────────
-def job_scan():
-    scan_and_reply()
-
-
-def job_followup():
-    run_followups(WA_NUMBER)
-
-
-def job_delivery():
-    run_delivery()
+# ── Scheduler ─────────────────────────────────────────────────────────────────
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(scan_and_reply, "interval", minutes=15, id="scan")
+    scheduler.add_job(lambda: run_followups(WA_NUMBER), "interval", hours=6, id="followup")
+    scheduler.add_job(run_delivery, "interval", hours=6, id="delivery")
+    scheduler.start()
+    print("Scheduler aktif: scan tiap 15 menit, follow-up & delivery tiap 6 jam.")
+    return scheduler
 
 
 if __name__ == "__main__":
@@ -83,28 +110,14 @@ if __name__ == "__main__":
         print("TOKEN BELUM ADA. Buka URL ini di browser untuk login TikTok:")
         print(get_auth_url())
         print("=" * 50)
-        print("Setelah login, jalankan: python setup_token.py <code_dari_url>")
+        print("Setelah login, set variabel TIKTOK_TOKEN di Railway.")
     else:
         print("Token ditemukan. Bot berjalan...")
 
-        # Jalankan Flask di background thread
-        t = threading.Thread(target=run_flask, daemon=True)
-        t.start()
-        print("Flask API aktif di http://localhost:5000")
+    scheduler = start_scheduler()
 
-        # Scheduler
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(job_scan, "interval", minutes=15, id="scan")
-        scheduler.add_job(job_followup, "interval", hours=6, id="followup")
-        scheduler.add_job(job_delivery, "interval", hours=6, id="delivery")
-        scheduler.start()
-        print("Scheduler aktif: scan tiap 15 menit, follow-up & delivery tiap 6 jam.")
-
-        # Tetap hidup
-        try:
-            import time
-            while True:
-                time.sleep(60)
-        except (KeyboardInterrupt, SystemExit):
-            scheduler.shutdown()
-            print("\nBot dihentikan.")
+    try:
+        flask_app.run(host="0.0.0.0", port=PORT, use_reloader=False)
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()
+        print("\nBot dihentikan.")
