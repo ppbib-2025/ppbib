@@ -239,7 +239,7 @@ def webhook():
 
     payload = data.get("payload", {})
     nomor   = payload.get("from", "")
-    teks    = payload.get("body", "").strip()
+    teks    = (payload.get("body") or "").strip()
 
     # Filter: nomor dikecualikan manual (teman/keluarga)
     if nomor in EXCLUDED_NUMBERS:
