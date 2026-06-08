@@ -10,13 +10,12 @@ Alur:
 """
 import os
 from datetime import datetime
-import os
-from anthropic import Anthropic
+from openai import OpenAI
 from src.seedance_api import generate_video, download_video
 from src.content_generator import get_todays_content
 
 _api_key = os.getenv("DINOIKI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
-client = Anthropic(api_key=_api_key)
+client = OpenAI(api_key=_api_key)
 VIDEO_DIR = "data/videos"
 
 
@@ -28,8 +27,8 @@ def script_to_storyboard(script: str, topic: str, hook: str) -> str:
     Script = apa yang DIUCAPKAN.
     Storyboard = apa yang TERLIHAT di kamera, shot per shot.
     """
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+    message = client.chat.completions.create(
+        model="gpt-4o-mini",
         max_tokens=400,
         messages=[{
             "role": "user",
@@ -56,7 +55,7 @@ Rules:
 Output only the prompt, no explanation:"""
         }]
     )
-    return message.content[0].text.strip()
+    return message.choices[0].message.content.strip()
 
 
 def produce_video(video_content: dict) -> dict:
