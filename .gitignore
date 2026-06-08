@@ -4,3 +4,4 @@ data/tokens/
 __pycache__/
 *.pyc
 .venv/
+whatsapp/node_modules/
