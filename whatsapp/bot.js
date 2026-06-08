@@ -2,8 +2,12 @@ require("dotenv").config({ path: "../.env" });
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const axios = require("axios");
+
+const PYTHON_API = "http://localhost:5000";
+
+// Nomor yang diabaikan (bot itu sendiri, broadcast, status)
+const IGNORED_SUFFIXES = ["@broadcast", "@g.us", "status@broadcast"];
 
 // ── Setup WhatsApp client ──────────────────────────────────────────────
 const client = new Client({
@@ -11,7 +15,6 @@ const client = new Client({
   puppeteer: { args: ["--no-sandbox", "--disable-setuid-sandbox"] },
 });
 
-// Tampilkan QR code di terminal saat pertama kali
 client.on("qr", (qr) => {
   console.log("\n==============================");
   console.log("SCAN QR CODE INI DENGAN WHATSAPP BUSINESS KAMU:");
@@ -27,9 +30,46 @@ client.on("auth_failure", () => {
   console.log("❌ Autentikasi gagal. Hapus folder session/ dan coba lagi.");
 });
 
+// ── Handler pesan masuk → AI response ──────────────────────────────────
+client.on("message", async (msg) => {
+  // Abaikan pesan dari grup, broadcast, dan pesan dari bot sendiri
+  if (IGNORED_SUFFIXES.some((s) => msg.from.endsWith(s))) return;
+  if (msg.fromMe) return;
+
+  const phone = msg.from.replace("@c.us", "");
+  const body = msg.body?.trim();
+
+  if (!body) return;
+
+  console.log(`📩 Pesan masuk dari ${phone}: ${body.substring(0, 60)}`);
+
+  try {
+    // Kirim ke Python untuk AI response
+    const resp = await axios.post(
+      `${PYTHON_API}/ai-reply`,
+      { phone, message: body },
+      { timeout: 30000 }
+    );
+
+    if (resp.data.success) {
+      console.log(`✓ AI reply terkirim ke ${phone}`);
+    }
+  } catch (err) {
+    console.error(`❌ Gagal kirim ke Python AI: ${err.message}`);
+    // Fallback: reply default jika Python tidak bisa dihubungi
+    try {
+      await msg.reply(
+        "Halo! Terima kasih sudah menghubungi PPBIB 🙏\n" +
+          "Kami sedang memproses pesanmu. Mohon tunggu sebentar ya!"
+      );
+    } catch (e) {
+      console.error("Gagal kirim fallback reply:", e.message);
+    }
+  }
+});
+
 // ── Fungsi kirim pesan ─────────────────────────────────────────────────
 async function sendMessage(phoneNumber, message) {
-  // Format nomor: 628xxx → 628xxx@c.us
   const chatId = phoneNumber.replace(/[^0-9]/g, "") + "@c.us";
   await client.sendMessage(chatId, message);
   console.log(`✓ Pesan terkirim ke ${phoneNumber}`);
