@@ -10,11 +10,13 @@ Alur:
 """
 import os
 from datetime import datetime
+import os
 from anthropic import Anthropic
 from src.seedance_api import generate_video, download_video
 from src.content_generator import get_todays_content
 
-client = Anthropic()
+_api_key = os.getenv("DINOIKI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+client = Anthropic(api_key=_api_key)
 VIDEO_DIR = "data/videos"
 
 

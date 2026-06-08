@@ -9,7 +9,8 @@ from datetime import datetime
 from anthropic import Anthropic
 from src.analytics import get_top_content
 
-client = Anthropic()
+_api_key = os.getenv("DINOIKI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+client = Anthropic(api_key=_api_key)
 
 CONTENT_QUEUE_FILE = "data/content_queue.json"
 
