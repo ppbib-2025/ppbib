@@ -26,7 +26,7 @@ from src.whatsapp import send_whatsapp, is_wa_connected
 
 WA_NUMBER = os.getenv("WHATSAPP_NUMBER", "")
 REPORT_WA_NUMBER = os.getenv("REPORT_WA_NUMBER", WA_NUMBER)
-HIGGSFIELD_ENABLED = bool(os.getenv("FAL_KEY"))
+VIDEO_ENABLED = bool(os.getenv("FAL_KEY"))
 TIKTOK_ENABLED = bool(load_token())
 
 
@@ -38,7 +38,7 @@ def _send_wa(msg: str, label: str):
         print(f"[WA] Skip {label} (WA tidak terhubung).")
 
 
-# ── Bot TikTok (hanya jalan kalau token ada) ─────────────────────────────
+# ── Bot TikTok ────────────────────────────────────────────────────────────────
 
 def job_scan():
     if not TIKTOK_ENABLED:
@@ -103,7 +103,7 @@ def job_daily_content_reminder():
 # ── Video Producer ───────────────────────────────────────────────────────────
 
 def job_produce_video():
-    if not HIGGSFIELDFIELD_ENABLED:
+    if not VIDEO_ENABLED:
         return
     print("[Video] Produksi video harian via Seedance...")
     try:
@@ -122,47 +122,39 @@ def job_produce_video():
 if __name__ == "__main__":
     print("=" * 50)
     print("PPBIB Bot mulai...")
-    print(f"  TikTok    : {'AKTIF' if TIKTOK_ENABLED else 'NONAKTIF (setup token dulu)'}")
-    print(f"  Video AI  : {'AKTIF' if HIGGSFIELDFIELD_ENABLED else 'NONAKTIF (set FAL_KEY)'}")
-    print(f"  WA Report : {REPORT_WA_NUMBER or 'BELUM DISET'}")
+    print(f"  TikTok   : {'AKTIF' if TIKTOK_ENABLED else 'NONAKTIF (setup token dulu)'}")
+    print(f"  Video AI : {'AKTIF' if VIDEO_ENABLED else 'NONAKTIF (set FAL_KEY untuk aktifkan)'}")
+    print(f"  WA Report: {REPORT_WA_NUMBER or 'BELUM DISET'}")
     print("=" * 50)
 
     if not TIKTOK_ENABLED:
-        print("[INFO] TikTok token tidak ditemukan.")
-        print("[INFO] Untuk setup TikTok, buka URL ini di browser:")
+        print("[INFO] TikTok token tidak ditemukan — bot tetap jalan tanpa TikTok.")
+        print("[INFO] Untuk setup TikTok nanti, buka URL ini di browser:")
         print(get_auth_url())
-        print("[INFO] Bot tetap jalan untuk Analytics + Content Generator.")
         print()
 
     scheduler = BlockingScheduler()
 
-    # Bot TikTok (skip kalau tidak ada token)
     scheduler.add_job(job_scan,     "interval", minutes=15, id="scan")
     scheduler.add_job(job_followup, "interval", hours=6,    id="followup")
 
-    # Analytics
-    scheduler.add_job(job_collect_analytics, "cron", hour=19, minute=0,                   id="analytics_collect")
-    scheduler.add_job(job_daily_report,      "cron", hour=20, minute=0,                   id="analytics_daily")
-    scheduler.add_job(job_weekly_report,     "cron", day_of_week="mon", hour=7, minute=0, id="analytics_weekly")
-
-    # Content
-    scheduler.add_job(job_daily_content_reminder, "cron", hour=7,  minute=0,                    id="content_reminder")
+    scheduler.add_job(job_collect_analytics,      "cron", hour=19, minute=0,                   id="analytics_collect")
+    scheduler.add_job(job_daily_report,           "cron", hour=20, minute=0,                   id="analytics_daily")
+    scheduler.add_job(job_weekly_report,          "cron", day_of_week="mon", hour=7, minute=0, id="analytics_weekly")
+    scheduler.add_job(job_daily_content_reminder, "cron", hour=7,  minute=0,                   id="content_reminder")
     scheduler.add_job(job_generate_content,       "cron", day_of_week="sun", hour=18, minute=0, id="content_generate")
-
-    # Video
-    scheduler.add_job(job_produce_video, "cron", hour=8, minute=0, id="video_produce")
+    scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                   id="video_produce")
 
     print("Scheduler aktif:")
+    print("  - Snapshot metrics  : tiap hari 19:00")
+    print("  - Laporan harian WA : tiap hari 20:00")
+    print("  - Laporan mingguan  : Senin 07:00")
+    print("  - Reminder konten   : tiap hari 07:00")
+    print("  - Generate konten   : Minggu 18:00")
     if TIKTOK_ENABLED:
         print("  - Scan komentar TikTok : tiap 15 menit")
-        print("  - Follow-up lead       : tiap 6 jam")
-    print("  - Snapshot metrics     : tiap hari 19:00")
-    print("  - Laporan harian WA    : tiap hari 20:00")
-    print("  - Laporan mingguan WA  : Senin 07:00")
-    print("  - Reminder konten WA   : tiap hari 07:00")
-    print("  - Generate konten baru : Minggu 18:00")
-    if HIGGSFIELDFIELD_ENABLED:
-        print("  - Produksi video       : tiap hari 08:00")
+    if VIDEO_ENABLED:
+        print("  - Produksi video : tiap hari 08:00")
     print()
     print("Bot berjalan... (Ctrl+C untuk berhenti)")
     scheduler.start()
