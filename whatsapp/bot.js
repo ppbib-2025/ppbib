@@ -1,6 +1,5 @@
 require("dotenv").config({ path: "../.env" });
 const { Client, LocalAuth } = require("whatsapp-web.js");
-const qrcode = require("qrcode-terminal");
 const QRCode = require("qrcode");
 const express = require("express");
 
@@ -21,7 +20,6 @@ client.on("qr", (qr) => {
   console.log("\n==============================");
   console.log("QR CODE SIAP — buka URL public Railway di browser HP kamu untuk scan!");
   console.log("==============================\n");
-  qrcode.generate(qr, { small: true });
 });
 
 client.on("ready", () => {
