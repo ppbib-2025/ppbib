@@ -106,7 +106,7 @@ Buat: 7 video (Senin-Minggu), 2 carousel (hari berbeda), 2 foto (hari berbeda).
 Semua Bahasa Indonesia. Topik: pakan mandiri, FCR, keuntungan ternak, tips budidaya, atau promo produk PPBIB."""
 
     message = client.chat.completions.create(
-        model="gpt-4o",
+        model="claude-sonnet-4-6",
         max_tokens=6000,
         messages=[{"role": "user", "content": prompt}]
     )

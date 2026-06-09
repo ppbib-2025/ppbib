@@ -30,7 +30,7 @@ def script_to_storyboard(script: str, topic: str, hook: str) -> str:
     Storyboard = apa yang TERLIHAT di kamera, shot per shot.
     """
     message = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="claude-haiku-4-5",
         max_tokens=400,
         messages=[{
             "role": "user",
