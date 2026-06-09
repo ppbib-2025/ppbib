@@ -40,7 +40,10 @@ client.on("disconnected", () => {
 
 async function sendMessage(phoneNumber, message) {
   const chatId = phoneNumber.replace(/[^0-9]/g, "") + "@c.us";
-  await client.sendMessage(chatId, message);
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("sendMessage timeout setelah 20s")), 20000)
+  );
+  await Promise.race([client.sendMessage(chatId, message), timeout]);
   console.log(`✓ Pesan terkirim ke ${phoneNumber}`);
 }
 
