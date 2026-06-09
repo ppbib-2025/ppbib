@@ -1,49 +1,83 @@
 require("dotenv").config({ path: "../.env" });
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
+const QRCode = require("qrcode");
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
 
-// ── Setup WhatsApp client ──────────────────────────────────────────────
+let currentQR = null;
+let isReady = false;
+
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: "./session" }),
-  puppeteer: { args: ["--no-sandbox", "--disable-setuid-sandbox"] },
+  puppeteer: {
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  },
 });
 
-// Tampilkan QR code di terminal saat pertama kali
 client.on("qr", (qr) => {
+  currentQR = qr;
+  isReady = false;
   console.log("\n==============================");
-  console.log("SCAN QR CODE INI DENGAN WHATSAPP BUSINESS KAMU:");
+  console.log("QR CODE SIAP — buka URL public Railway di browser HP kamu untuk scan!");
   console.log("==============================\n");
   qrcode.generate(qr, { small: true });
 });
 
 client.on("ready", () => {
+  currentQR = null;
+  isReady = true;
   console.log("\n✅ WhatsApp Bot PPBIB siap digunakan!\n");
 });
 
 client.on("auth_failure", () => {
+  isReady = false;
   console.log("❌ Autentikasi gagal. Hapus folder session/ dan coba lagi.");
 });
 
-// ── Fungsi kirim pesan ─────────────────────────────────────────────────
+client.on("disconnected", () => {
+  isReady = false;
+  console.log("⚠️ WhatsApp terputus.");
+});
+
 async function sendMessage(phoneNumber, message) {
-  // Format nomor: 628xxx → 628xxx@c.us
   const chatId = phoneNumber.replace(/[^0-9]/g, "") + "@c.us";
   await client.sendMessage(chatId, message);
   console.log(`✓ Pesan terkirim ke ${phoneNumber}`);
 }
 
-// ── API server (dipanggil dari Python) ────────────────────────────────
 const app = express();
 app.use(express.json());
 
+// Halaman QR code — buka di browser HP untuk scan
+app.get("/", async (req, res) => {
+  if (isReady) {
+    return res.send(`<html><body style="font-family:sans-serif;text-align:center;padding:40px">
+      <h2>✅ WhatsApp Bot PPBIB</h2>
+      <p style="color:green;font-size:20px">Terhubung & siap kirim pesan</p>
+    </body></html>`);
+  }
+  if (!currentQR) {
+    return res.send(`<html><body style="font-family:sans-serif;text-align:center;padding:40px">
+      <h2>⏳ WhatsApp Bot PPBIB</h2>
+      <p>Menunggu QR code... refresh halaman ini dalam 5 detik</p>
+      <script>setTimeout(()=>location.reload(),5000)</script>
+    </body></html>`);
+  }
+  const qrImage = await QRCode.toDataURL(currentQR);
+  res.send(`<html><body style="font-family:sans-serif;text-align:center;padding:40px">
+    <h2>📱 Scan QR Code dengan WhatsApp Business</h2>
+    <p>Buka WhatsApp Business → Linked Devices → Link a Device → Scan</p>
+    <img src="${qrImage}" style="width:300px;height:300px"/>
+    <p><small>QR code refresh otomatis tiap 20 detik</small></p>
+    <script>setTimeout(()=>location.reload(),20000)</script>
+  </body></html>`);
+});
+
 app.post("/send", async (req, res) => {
   const { phone, message } = req.body;
-  if (!phone || !message) {
+  if (!phone || !message)
     return res.status(400).json({ error: "phone dan message wajib diisi" });
-  }
   try {
     await sendMessage(phone, message);
     res.json({ success: true });
@@ -54,12 +88,13 @@ app.post("/send", async (req, res) => {
 });
 
 app.get("/status", (req, res) => {
-  res.json({ status: client.info ? "connected" : "disconnected" });
+  res.json({ status: isReady ? "connected" : "disconnected" });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`API server berjalan di http://localhost:${PORT}`);
+  console.log(`API server berjalan di port ${PORT}`);
+  console.log(`Buka URL public Railway di browser untuk lihat QR code`);
 });
 
 client.initialize();
