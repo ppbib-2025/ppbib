@@ -6,10 +6,13 @@ import os
 import json
 import re
 from datetime import datetime
-from anthropic import Anthropic
+from openai import OpenAI
 from src.analytics import get_top_content
 
-client = Anthropic(api_key=os.getenv("DINOIKI_API_KEY"))
+client = OpenAI(
+    api_key=os.getenv("DINOIKI_API_KEY"),
+    base_url="https://ai.dinoiki.com/v1",
+)
 
 CONTENT_QUEUE_FILE = "data/content_queue.json"
 
@@ -102,13 +105,13 @@ Return HANYA JSON valid, tidak ada teks lain sebelum atau sesudah JSON:
 Buat: 7 video (Senin-Minggu), 2 carousel (hari berbeda), 2 foto (hari berbeda).
 Semua Bahasa Indonesia. Topik: pakan mandiri, FCR, keuntungan ternak, tips budidaya, atau promo produk PPBIB."""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
+    message = client.chat.completions.create(
+        model="gpt-4o",
         max_tokens=6000,
         messages=[{"role": "user", "content": prompt}]
     )
 
-    raw = message.content[0].text.strip()
+    raw = message.choices[0].message.content.strip()
     match = re.search(r'\{.*\}', raw, re.DOTALL)
     if not match:
         raise ValueError(f"Response bukan JSON valid: {raw[:200]}")
