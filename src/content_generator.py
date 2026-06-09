@@ -116,7 +116,10 @@ Semua Bahasa Indonesia. Topik: pakan mandiri, FCR, keuntungan ternak, tips budid
     if not match:
         raise ValueError(f"Response bukan JSON valid: {raw[:200]}")
 
-    plan = json.loads(match.group())
+    json_str = match.group()
+    json_str = re.sub(r',\s*}', '}', json_str)
+    json_str = re.sub(r',\s*]', ']', json_str)
+    plan = json.loads(json_str)
     plan["generated_at"] = datetime.now().isoformat()
     plan["week_of"] = datetime.now().strftime("%Y-%m-%d")
     _append_queue(plan)
