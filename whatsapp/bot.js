@@ -93,7 +93,7 @@ app.get("/status", (req, res) => {
   res.json({ status: isReady ? "connected" : "disconnected" });
 });
 
-// Analisis lead langsung di bot (tidak perlu transfer data besar)
+// Analisis semua lead dari seluruh riwayat chat WA
 app.get("/analyze-leads", async (req, res) => {
   if (!isReady) return res.status(503).json({ error: "WhatsApp belum terhubung" });
   const apiKey = process.env.DINOIKI_API_KEY;
@@ -101,29 +101,42 @@ app.get("/analyze-leads", async (req, res) => {
 
   try {
     const chats = await client.getChats();
-    const privateChats = chats.filter(c => !c.isGroup).slice(0, 30);
-    const hotLeads = [];
+    const privateChats = chats.filter(c => !c.isGroup);
+    console.log(`[LeadAnalyzer] Memulai scan ${privateChats.length} chat...`);
 
-    for (const chat of privateChats) {
-      try {
-        const messages = await chat.fetchMessages({ limit: 15 });
+    const hotLeads = [];
+    const BATCH = 10;
+
+    for (let i = 0; i < privateChats.length; i += BATCH) {
+      const batch = privateChats.slice(i, i + BATCH);
+      const results = await Promise.allSettled(batch.map(async (chat) => {
+        const messages = await chat.fetchMessages({ limit: 20 });
+        const customerMsgs = messages.filter(m => !m.fromMe && (m.body || "").trim());
+        if (customerMsgs.length === 0) return null;
+
         const conv = messages
           .filter(m => (m.body || "").trim())
           .map(m => `${m.fromMe ? "saya" : "customer"}: ${m.body}`)
           .join("\n");
-        if (!conv || messages.filter(m => !m.fromMe).length === 0) continue;
 
-        const prompt = `PPBIB jual ebook itik Rp75.000 dan kalkulator pakan.\n\nAnalisis chat ini:\n---\n${conv}\n---\n\nApakah ini lead panas (minat tapi belum closing)? Kriteria: tanya harga, bilang nanti/pikir-pikir, atau tidak balas setelah minat.\n\nReturn JSON saja: {"is_hot_lead":true/false,"score":1-10,"reason":"1 kalimat","last_intent":"apa terakhir mereka tanya","suggested_reply":"follow-up 2-3 kalimat BI"}`;
+        const prompt = `PPBIB jual ebook itik Rp75.000 dan kalkulator pakan.\n\nAnalisis chat ini:\n---\n${conv}\n---\n\nApakah ini lead panas (minat tapi belum closing)? Kriteria: tanya harga, bilang nanti/pikir-pikir, atau tidak balas setelah minat.\n\nReturn JSON saja: {"is_hot_lead":true/false,"score":1-10,"reason":"1 kalimat","last_intent":"apa terakhir mereka tanya","suggested_reply":"pesan follow-up 2-3 kalimat Bahasa Indonesia untuk dikirim manual oleh pemilik"}`;
 
         const result = await callDinoiki(apiKey, prompt);
         if (result && result.is_hot_lead && result.score >= 6) {
-          hotLeads.push({ phone: chat.id.user, name: chat.name || chat.id.user, ...result });
+          return { phone: chat.id.user, name: chat.name || chat.id.user, ...result };
         }
-      } catch (_) {}
+        return null;
+      }));
+
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value) hotLeads.push(r.value);
+      }
+      console.log(`[LeadAnalyzer] Progress: ${Math.min(i + BATCH, privateChats.length)}/${privateChats.length}`);
     }
 
     hotLeads.sort((a, b) => (b.score || 0) - (a.score || 0));
-    res.json({ leads: hotLeads, count: hotLeads.length });
+    console.log(`[LeadAnalyzer] Selesai. ${hotLeads.length} lead panas ditemukan.`);
+    res.json({ leads: hotLeads, count: hotLeads.length, total_scanned: privateChats.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

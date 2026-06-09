@@ -22,12 +22,13 @@ Target: peternak itik Indonesia, skala 100-2.000 ekor."""
 
 
 def analyze_leads() -> list:
-    print("[LeadAnalyzer] Meminta analisis dari WhatsApp bot...")
+    print("[LeadAnalyzer] Meminta analisis dari WhatsApp bot (semua chat)...")
     try:
-        resp = requests.get(f"{WA_API}/analyze-leads", timeout=300)
+        resp = requests.get(f"{WA_API}/analyze-leads", timeout=600)
         data = resp.json()
         leads = data.get("leads", [])
-        print(f"[LeadAnalyzer] Ditemukan {len(leads)} lead panas.")
+        total = data.get("total_scanned", "?")
+        print(f"[LeadAnalyzer] Scan {total} chat selesai. Ditemukan {len(leads)} lead panas.")
         return leads
     except Exception as e:
         print(f"[LeadAnalyzer] Gagal: {e}")
