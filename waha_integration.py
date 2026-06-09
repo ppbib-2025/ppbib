@@ -37,7 +37,9 @@ LOG_FILE           = Path(__file__).parent / "leads_log.json"
 DRAFT_LOG_FILE     = Path(__file__).parent / "draft_replies.json"
 REPLIED_FILE       = Path(__file__).parent / "data" / "replied_comments.txt"
 
-BOT_ENABLED  = os.getenv("BOT_ENABLED",  "true").strip().lower() == "true"
+# On/off switch
+BOT_ENABLED  = os.getenv("BOT_ENABLED",  "false").strip().lower() == "true"
+# Learning mode: baca + generate reply tapi tidak kirim, simpan ke draft_replies.json
 BOT_LEARNING = os.getenv("BOT_LEARNING", "false").strip().lower() == "true"
 
 _raw_excluded = os.getenv("EXCLUDED_NUMBERS", "")
