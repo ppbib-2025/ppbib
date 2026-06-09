@@ -2,8 +2,10 @@
 Entry point: jalankan dengan `python main.py`
 """
 import os
+import threading
 from dotenv import load_dotenv
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
+from flask import Flask, jsonify
 
 load_dotenv()
 
@@ -120,7 +122,7 @@ def job_produce_video():
 # ── Lead Analyzer ────────────────────────────────────────────────────────────
 
 def job_analyze_leads():
-    print("[LeadAnalyzer] Memulai analisis lead malam ini...")
+    print("[LeadAnalyzer] Memulai analisis lead...")
     try:
         from src.lead_analyzer import analyze_leads, format_lead_report
         leads = analyze_leads()
@@ -129,6 +131,39 @@ def job_analyze_leads():
         _send_wa(report, "Analisis lead")
     except Exception as e:
         print(f"[LeadAnalyzer] ERROR: {e}")
+
+
+# ── Flask trigger API ─────────────────────────────────────────────────────────
+
+app = Flask(__name__)
+
+JOBS = {
+    "lead":      job_analyze_leads,
+    "daily":     job_daily_report,
+    "weekly":    job_weekly_report,
+    "content":   job_generate_content,
+    "reminder":  job_daily_content_reminder,
+    "analytics": job_collect_analytics,
+    "video":     job_produce_video,
+}
+
+
+@app.get("/")
+def index():
+    return jsonify({
+        "status": "ok",
+        "trigger_url": "/trigger/<job>",
+        "jobs": list(JOBS.keys()),
+    })
+
+
+@app.post("/trigger/<job_name>")
+def trigger(job_name):
+    fn = JOBS.get(job_name)
+    if not fn:
+        return jsonify({"error": f"Job '{job_name}' tidak ada. Pilihan: {list(JOBS.keys())}"}), 404
+    threading.Thread(target=fn, daemon=True).start()
+    return jsonify({"ok": True, "job": job_name, "status": "started"})
 
 
 # ── Main ────────────────────────────────────────────────────────────────────
@@ -147,18 +182,20 @@ if __name__ == "__main__":
         print(get_auth_url())
         print()
 
-    scheduler = BlockingScheduler(timezone="Asia/Jakarta")
+    scheduler = BackgroundScheduler(timezone="Asia/Jakarta")
 
     scheduler.add_job(job_scan,     "interval", minutes=15, id="scan")
     scheduler.add_job(job_followup, "interval", hours=6,    id="followup")
 
-    scheduler.add_job(job_collect_analytics,      "cron", hour=19, minute=0,                   id="analytics_collect")
-    scheduler.add_job(job_daily_report,           "cron", hour=20, minute=0,                   id="analytics_daily")
-    scheduler.add_job(job_weekly_report,          "cron", day_of_week="mon", hour=7, minute=0, id="analytics_weekly")
-    scheduler.add_job(job_daily_content_reminder, "cron", hour=7,  minute=0,                   id="content_reminder")
+    scheduler.add_job(job_collect_analytics,      "cron", hour=19, minute=0,                    id="analytics_collect")
+    scheduler.add_job(job_daily_report,           "cron", hour=20, minute=0,                    id="analytics_daily")
+    scheduler.add_job(job_weekly_report,          "cron", day_of_week="mon", hour=7, minute=0,  id="analytics_weekly")
+    scheduler.add_job(job_daily_content_reminder, "cron", hour=7,  minute=0,                    id="content_reminder")
     scheduler.add_job(job_generate_content,       "cron", day_of_week="sun", hour=18, minute=0, id="content_generate")
-    scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                   id="video_produce")
-    scheduler.add_job(job_analyze_leads,          "cron", hour=21, minute=0,                   id="lead_analyze")
+    scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                    id="video_produce")
+    scheduler.add_job(job_analyze_leads,          "cron", hour=21, minute=0,                    id="lead_analyze")
+
+    scheduler.start()
 
     print("Scheduler aktif:")
     print("  - Snapshot metrics  : tiap hari 19:00")
@@ -172,5 +209,8 @@ if __name__ == "__main__":
     if VIDEO_ENABLED:
         print("  - Produksi video : tiap hari 08:00")
     print()
-    print("Bot berjalan... (Ctrl+C untuk berhenti)")
-    scheduler.start()
+    print("Trigger manual: POST /trigger/<job>")
+    print("Bot berjalan...")
+
+    PORT = int(os.getenv("PORT", 8080))
+    app.run(host="0.0.0.0", port=PORT)
