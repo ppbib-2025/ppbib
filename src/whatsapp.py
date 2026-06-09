@@ -1,6 +1,7 @@
+import os
 import requests
 
-WA_API = "http://localhost:3000"
+WA_API = os.getenv("WHATSAPP_URL", "http://ppbib.railway.internal:3000")
 
 
 def send_whatsapp(phone: str, message: str) -> bool:
