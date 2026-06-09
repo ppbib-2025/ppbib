@@ -92,6 +92,30 @@ app.get("/status", (req, res) => {
   res.json({ status: isReady ? "connected" : "disconnected" });
 });
 
+// Ambil history chat untuk analisis lead
+app.get("/chats", async (req, res) => {
+  if (!isReady) return res.status(503).json({ error: "WhatsApp belum terhubung" });
+  try {
+    const chats = await client.getChats();
+    const privateChats = chats.filter(c => !c.isGroup);
+    const result = [];
+    for (const chat of privateChats.slice(0, 100)) {
+      try {
+        const messages = await chat.fetchMessages({ limit: 25 });
+        const filtered = messages
+          .map(m => ({ from: m.fromMe ? "saya" : "customer", body: m.body || "", time: m.timestamp }))
+          .filter(m => m.body.trim());
+        if (filtered.length > 0) {
+          result.push({ phone: chat.id.user, name: chat.name || chat.id.user, messages: filtered });
+        }
+      } catch (_) {}
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`API server berjalan di port ${PORT}`);

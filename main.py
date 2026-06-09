@@ -117,6 +117,20 @@ def job_produce_video():
         _send_wa(f"⚠️ Seedance error: {e}", "Error video producer")
 
 
+# ── Lead Analyzer ────────────────────────────────────────────────────────────
+
+def job_analyze_leads():
+    print("[LeadAnalyzer] Memulai analisis lead malam ini...")
+    try:
+        from src.lead_analyzer import analyze_leads, format_lead_report
+        leads = analyze_leads()
+        report = format_lead_report(leads)
+        print(report)
+        _send_wa(report, "Analisis lead")
+    except Exception as e:
+        print(f"[LeadAnalyzer] ERROR: {e}")
+
+
 # ── Main ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -144,6 +158,7 @@ if __name__ == "__main__":
     scheduler.add_job(job_daily_content_reminder, "cron", hour=7,  minute=0,                   id="content_reminder")
     scheduler.add_job(job_generate_content,       "cron", day_of_week="sun", hour=18, minute=0, id="content_generate")
     scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                   id="video_produce")
+    scheduler.add_job(job_analyze_leads,          "cron", hour=21, minute=0,                   id="lead_analyze")
 
     print("Scheduler aktif:")
     print("  - Snapshot metrics  : tiap hari 19:00")
@@ -151,6 +166,7 @@ if __name__ == "__main__":
     print("  - Laporan mingguan  : Senin 07:00")
     print("  - Reminder konten   : tiap hari 07:00")
     print("  - Generate konten   : Minggu 18:00")
+    print("  - Analisis lead WA  : tiap hari 21:00")
     if TIKTOK_ENABLED:
         print("  - Scan komentar TikTok : tiap 15 menit")
     if VIDEO_ENABLED:
