@@ -111,15 +111,13 @@ Semua Bahasa Indonesia. Topik: pakan mandiri, FCR, keuntungan ternak, tips budid
         messages=[{"role": "user", "content": prompt}]
     )
 
+    from json_repair import repair_json
     raw = message.choices[0].message.content.strip()
     match = re.search(r'\{.*\}', raw, re.DOTALL)
     if not match:
         raise ValueError(f"Response bukan JSON valid: {raw[:200]}")
 
-    json_str = match.group()
-    json_str = re.sub(r',\s*}', '}', json_str)
-    json_str = re.sub(r',\s*]', ']', json_str)
-    plan = json.loads(json_str)
+    plan = json.loads(repair_json(match.group()))
     plan["generated_at"] = datetime.now().isoformat()
     plan["week_of"] = datetime.now().strftime("%Y-%m-%d")
     _append_queue(plan)
