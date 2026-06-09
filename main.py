@@ -147,7 +147,7 @@ if __name__ == "__main__":
         print(get_auth_url())
         print()
 
-    scheduler = BlockingScheduler()
+    scheduler = BlockingScheduler(timezone="Asia/Jakarta")
 
     scheduler.add_job(job_scan,     "interval", minutes=15, id="scan")
     scheduler.add_job(job_followup, "interval", hours=6,    id="followup")
