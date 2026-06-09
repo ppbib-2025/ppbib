@@ -21,73 +21,17 @@ PPBIB_CONTEXT = """PPBIB menjual produk digital untuk peternak itik:
 Target: peternak itik Indonesia, skala 100-2.000 ekor."""
 
 
-def fetch_chats() -> list:
-    try:
-        resp = requests.get(f"{WA_API}/chats", timeout=90)
-        return resp.json()
-    except Exception as e:
-        print(f"[LeadAnalyzer] Gagal ambil chat: {e}")
-        return []
-
-
-def _analyze_one(chat: dict) -> dict | None:
-    messages = chat.get("messages", [])
-    if len(messages) < 2:
-        return None
-
-    conv = "\n".join(
-        f"{m['from']}: {m['body']}"
-        for m in messages[-20:]
-        if m.get("body", "").strip()
-    )
-    if not conv.strip():
-        return None
-
-    prompt = f"""{PPBIB_CONTEXT}
-
-Analisis percakapan WhatsApp ini:
----
-{conv}
----
-
-Apakah ini lead panas (minat beli tapi belum closing)?
-Kriteria: tanya harga, minta info produk, bilang "nanti"/"pikir-pikir"/"mau konsultasi dulu", atau tidak balas setelah menunjukkan minat.
-
-Return JSON saja tanpa teks lain:
-{{"is_hot_lead": true/false, "score": 1-10, "reason": "alasan 1 kalimat", "last_intent": "apa yang terakhir mereka tanyakan", "suggested_reply": "follow-up natural max 3 kalimat Bahasa Indonesia"}}"""
-
-    try:
-        resp = client.chat.completions.create(
-            model="claude-sonnet-4-6",
-            max_tokens=300,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        raw = resp.choices[0].message.content.strip()
-        result = json.loads(raw)
-        if result.get("is_hot_lead") and result.get("score", 0) >= 6:
-            return {"phone": chat["phone"], "name": chat.get("name", chat["phone"]), **result}
-    except Exception as e:
-        print(f"[LeadAnalyzer] Skip {chat.get('phone')}: {e}")
-    return None
-
-
 def analyze_leads() -> list:
-    print("[LeadAnalyzer] Mengambil history chat WA...")
-    chats = fetch_chats()
-    if not chats:
-        print("[LeadAnalyzer] Tidak ada chat ditemukan.")
+    print("[LeadAnalyzer] Meminta analisis dari WhatsApp bot...")
+    try:
+        resp = requests.get(f"{WA_API}/analyze-leads", timeout=300)
+        data = resp.json()
+        leads = data.get("leads", [])
+        print(f"[LeadAnalyzer] Ditemukan {len(leads)} lead panas.")
+        return leads
+    except Exception as e:
+        print(f"[LeadAnalyzer] Gagal: {e}")
         return []
-
-    print(f"[LeadAnalyzer] Menganalisis {len(chats)} chat...")
-    hot_leads = []
-    for chat in chats:
-        result = _analyze_one(chat)
-        if result:
-            hot_leads.append(result)
-
-    hot_leads.sort(key=lambda x: x.get("score", 0), reverse=True)
-    print(f"[LeadAnalyzer] Ditemukan {len(hot_leads)} lead panas.")
-    return hot_leads
 
 
 def format_lead_report(leads: list) -> str:

@@ -2,6 +2,7 @@ require("dotenv").config({ path: "../.env" });
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const QRCode = require("qrcode");
 const express = require("express");
+const https = require("https");
 
 let currentQR = null;
 let isReady = false;
@@ -92,29 +93,71 @@ app.get("/status", (req, res) => {
   res.json({ status: isReady ? "connected" : "disconnected" });
 });
 
-// Ambil history chat untuk analisis lead
-app.get("/chats", async (req, res) => {
+// Analisis lead langsung di bot (tidak perlu transfer data besar)
+app.get("/analyze-leads", async (req, res) => {
   if (!isReady) return res.status(503).json({ error: "WhatsApp belum terhubung" });
+  const apiKey = process.env.DINOIKI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "DINOIKI_API_KEY belum di-set" });
+
   try {
     const chats = await client.getChats();
-    const privateChats = chats.filter(c => !c.isGroup);
-    const result = [];
-    for (const chat of privateChats.slice(0, 100)) {
+    const privateChats = chats.filter(c => !c.isGroup).slice(0, 30);
+    const hotLeads = [];
+
+    for (const chat of privateChats) {
       try {
-        const messages = await chat.fetchMessages({ limit: 25 });
-        const filtered = messages
-          .map(m => ({ from: m.fromMe ? "saya" : "customer", body: m.body || "", time: m.timestamp }))
-          .filter(m => m.body.trim());
-        if (filtered.length > 0) {
-          result.push({ phone: chat.id.user, name: chat.name || chat.id.user, messages: filtered });
+        const messages = await chat.fetchMessages({ limit: 15 });
+        const conv = messages
+          .filter(m => (m.body || "").trim())
+          .map(m => `${m.fromMe ? "saya" : "customer"}: ${m.body}`)
+          .join("\n");
+        if (!conv || messages.filter(m => !m.fromMe).length === 0) continue;
+
+        const prompt = `PPBIB jual ebook itik Rp75.000 dan kalkulator pakan.\n\nAnalisis chat ini:\n---\n${conv}\n---\n\nApakah ini lead panas (minat tapi belum closing)? Kriteria: tanya harga, bilang nanti/pikir-pikir, atau tidak balas setelah minat.\n\nReturn JSON saja: {"is_hot_lead":true/false,"score":1-10,"reason":"1 kalimat","last_intent":"apa terakhir mereka tanya","suggested_reply":"follow-up 2-3 kalimat BI"}`;
+
+        const result = await callDinoiki(apiKey, prompt);
+        if (result && result.is_hot_lead && result.score >= 6) {
+          hotLeads.push({ phone: chat.id.user, name: chat.name || chat.id.user, ...result });
         }
       } catch (_) {}
     }
-    res.json(result);
+
+    hotLeads.sort((a, b) => (b.score || 0) - (a.score || 0));
+    res.json({ leads: hotLeads, count: hotLeads.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+function callDinoiki(apiKey, prompt) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 250,
+      messages: [{ role: "user", content: prompt }]
+    });
+    const req = https.request({
+      hostname: "ai.dinoiki.com",
+      path: "/v1/chat/completions",
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}`, "Content-Length": Buffer.byteLength(body) }
+    }, (r) => {
+      let data = "";
+      r.on("data", d => data += d);
+      r.on("end", () => {
+        try {
+          const json = JSON.parse(data);
+          const text = json.choices[0].message.content.trim();
+          resolve(JSON.parse(text));
+        } catch (_) { resolve(null); }
+      });
+    });
+    req.on("error", reject);
+    setTimeout(() => reject(new Error("timeout")), 15000);
+    req.write(body);
+    req.end();
+  });
+}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
