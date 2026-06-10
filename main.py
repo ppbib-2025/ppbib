@@ -157,7 +157,7 @@ def index():
     })
 
 
-@app.post("/trigger/<job_name>")
+@app.route("/trigger/<job_name>", methods=["GET", "POST"])
 def trigger(job_name):
     fn = JOBS.get(job_name)
     if not fn:
