@@ -122,13 +122,10 @@ def job_produce_video():
 # ── Lead Analyzer ────────────────────────────────────────────────────────────
 
 def job_analyze_leads():
-    print("[LeadAnalyzer] Memulai analisis lead...")
+    print("[LeadAnalyzer] Trigger analisis lead...")
     try:
-        from src.lead_analyzer import analyze_leads, format_lead_report
-        leads = analyze_leads()
-        report = format_lead_report(leads)
-        print(report)
-        _send_wa(report, "Analisis lead")
+        from src.lead_analyzer import analyze_leads
+        analyze_leads()
     except Exception as e:
         print(f"[LeadAnalyzer] ERROR: {e}")
 
