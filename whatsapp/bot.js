@@ -15,6 +15,7 @@ const client = new Client({
   puppeteer: {
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    protocolTimeout: 300000,
   },
 });
 
@@ -75,7 +76,7 @@ async function runLeadAnalysis() {
     for (let i = 0; i < privateChats.length; i += BATCH) {
       const batch = privateChats.slice(i, i + BATCH);
       const results = await Promise.allSettled(batch.map(async (chat) => {
-        const messages = await chat.fetchMessages({ limit: 20 });
+        const messages = await chat.fetchMessages({ limit: 10 });
         const customerMsgs = messages.filter(m => !m.fromMe && (m.body || "").trim());
         if (customerMsgs.length === 0) return null;
 
