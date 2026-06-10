@@ -67,7 +67,7 @@ async function runLeadAnalysis() {
 
   try {
     const chats = await client.getChats();
-    const privateChats = chats.filter(c => !c.isGroup);
+    const privateChats = chats.filter(c => !c.isGroup).slice(0, 150);
     console.log(`[LeadAnalyzer] Total chat: ${privateChats.length}`);
 
     const hotLeads = [];
