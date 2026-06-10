@@ -66,16 +66,22 @@ async function runLeadAnalysis() {
   console.log("[LeadAnalyzer] Mulai scan semua chat...");
 
   try {
-    const chats = await client.getChats();
-    const privateChats = chats.filter(c => !c.isGroup).slice(0, 150);
-    console.log(`[LeadAnalyzer] Total chat: ${privateChats.length}`);
+    // Ambil ID chat langsung dari store (cepat, tanpa load semua data)
+    const chatIds = await client.pupPage.evaluate(() => {
+      return window.Store.Chat.getModelsArray()
+        .filter(c => !c.isGroup)
+        .slice(0, 80)
+        .map(c => c.id._serialized);
+    });
+    console.log(`[LeadAnalyzer] Total chat ditemukan: ${chatIds.length}`);
 
     const hotLeads = [];
-    const BATCH = 10;
+    const BATCH = 5;
 
-    for (let i = 0; i < privateChats.length; i += BATCH) {
-      const batch = privateChats.slice(i, i + BATCH);
-      const results = await Promise.allSettled(batch.map(async (chat) => {
+    for (let i = 0; i < chatIds.length; i += BATCH) {
+      const batchIds = chatIds.slice(i, i + BATCH);
+      const results = await Promise.allSettled(batchIds.map(async (chatId) => {
+        const chat = await client.getChatById(chatId);
         const messages = await chat.fetchMessages({ limit: 10 });
         const customerMsgs = messages.filter(m => !m.fromMe && (m.body || "").trim());
         if (customerMsgs.length === 0) return null;
@@ -97,17 +103,19 @@ async function runLeadAnalysis() {
       for (const r of results) {
         if (r.status === "fulfilled" && r.value) hotLeads.push(r.value);
       }
-      const done = Math.min(i + BATCH, privateChats.length);
-      console.log(`[LeadAnalyzer] Progress: ${done}/${privateChats.length}, lead panas: ${hotLeads.length}`);
+      const done = Math.min(i + BATCH, chatIds.length);
+      console.log(`[LeadAnalyzer] Progress: ${done}/${chatIds.length}, lead panas: ${hotLeads.length}`);
     }
 
+    const totalScanned = chatIds.length;
+
     hotLeads.sort((a, b) => (b.score || 0) - (a.score || 0));
-    leadAnalysis = { status: "done", startedAt: leadAnalysis.startedAt, finishedAt: new Date().toISOString(), leads: hotLeads, total_scanned: privateChats.length, error: null };
-    console.log(`[LeadAnalyzer] Selesai. ${hotLeads.length} lead panas dari ${privateChats.length} chat.`);
+    leadAnalysis = { status: "done", startedAt: leadAnalysis.startedAt, finishedAt: new Date().toISOString(), leads: hotLeads, total_scanned: totalScanned, error: null };
+    console.log(`[LeadAnalyzer] Selesai. ${hotLeads.length} lead panas dari ${totalScanned} chat.`);
 
     // Kirim langsung ke WA owner
     if (ownerPhone && isReady) {
-      const msg = formatLeadReport(hotLeads, privateChats.length);
+      const msg = formatLeadReport(hotLeads, totalScanned);
       await sendMessage(ownerPhone, msg);
       console.log("[LeadAnalyzer] Laporan terkirim ke owner.");
     }
