@@ -166,6 +166,37 @@ def trigger(job_name):
     return jsonify({"ok": True, "job": job_name, "status": "started"})
 
 
+@app.get("/debug/lead")
+def debug_lead():
+    """Tampilkan hasil analisis lead langsung di browser (tidak kirim WA)."""
+    try:
+        from src.lead_analyzer import analyze_leads, format_lead_report
+        from src.whatsapp import is_wa_connected
+        wa_status = is_wa_connected()
+        leads = analyze_leads()
+        report = format_lead_report(leads)
+        return jsonify({
+            "wa_connected": wa_status,
+            "lead_count": len(leads),
+            "leads": leads,
+            "report_preview": report[:500],
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.get("/debug/status")
+def debug_status():
+    """Cek status koneksi WA dan env vars."""
+    from src.whatsapp import is_wa_connected
+    return jsonify({
+        "wa_connected": is_wa_connected(),
+        "wa_number": REPORT_WA_NUMBER or "BELUM DISET",
+        "dinoiki_key": "SET" if os.getenv("DINOIKI_API_KEY") else "TIDAK ADA",
+        "whatsapp_url": os.getenv("WHATSAPP_URL", "http://ppbib.railway.internal:3000"),
+    })
+
+
 # ── Main ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
