@@ -4,3 +4,4 @@ builder = "railpack"
 [deploy]
 startCommand = "python main.py"
 restartPolicyType = "on_failure"
+healthcheckPath = "/health"
