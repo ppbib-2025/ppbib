@@ -1,0 +1,45 @@
+{
+  "entries": [
+    {
+      "timestamp": "2026-06-15 02:28",
+      "kolam": "Kolam 1",
+      "jenis_ikan": "Mas",
+      "ph": 7.2,
+      "do_level": 6.5,
+      "suhu": 28.0,
+      "kecerahan": 38.0,
+      "amonia": 0.01,
+      "feeding_rate": 3.5,
+      "fcr": 1.4,
+      "jumlah_pakan": 7.5,
+      "biomassa": 215.0,
+      "survival_rate": 94.0,
+      "padat_tebar": 22.0,
+      "catatan": "Kondisi normal, pakan habis",
+      "assessment": "BAIK"
+    },
+    {
+      "timestamp": "2026-06-15 02:28",
+      "kolam": "Kolam 2",
+      "jenis_ikan": "Nila",
+      "ph": 5.8,
+      "do_level": 3.2,
+      "suhu": 32.5,
+      "kecerahan": 12.0,
+      "amonia": 0.04,
+      "feeding_rate": 6.5,
+      "fcr": 2.8,
+      "jumlah_pakan": null,
+      "biomassa": 180.0,
+      "survival_rate": 65.0,
+      "padat_tebar": null,
+      "catatan": "Ikan nampak kurang aktif pagi ini",
+      "assessment": "KRITIS"
+    }
+  ],
+  "kolam_list": [
+    "Kolam 1",
+    "Kolam 2",
+    "Kolam 3"
+  ]
+}
