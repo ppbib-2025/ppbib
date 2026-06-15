@@ -69,7 +69,9 @@ DEFAULT_BLOK = [
 
 DEFAULT_IKAN = [
     "Mas", "Nila", "Lele", "Gurame", "Patin", "Bawal",
-    "Tambakan", "Sepat", "Tawes", "Nilem",
+    "Tambakan", "Sepat", "Tawes", "Lalawak", "Berem Panon",
+    "Nilem Hitam", "Nilem Merah", "Brek", "Tengadak",
+    "Tor Soro", "Tor Tambroides", "Tor Douronensis",
 ]
 
 
