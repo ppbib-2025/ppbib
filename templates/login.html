@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – Dashboard Plasma Nutfah Cijeruk</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #06112a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-box {
+      background: #0d1f3c;
+      border: 1px solid #1a3360;
+      border-radius: 18px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .logo {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #00d4f5, #005fa3);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px;
+      margin: 0 auto 20px;
+    }
+    h1 { font-size: 1.1rem; font-weight: 700; color: #00d4f5; margin-bottom: 4px; }
+    p  { font-size: .78rem; color: #6a8baa; margin-bottom: 28px; }
+    label { display: block; text-align: left; font-size: .75rem; color: #6a8baa; margin-bottom: 6px; }
+    input[type="password"] {
+      width: 100%;
+      background: #0a1628;
+      border: 1px solid #1a3360;
+      border-radius: 10px;
+      color: #cde4f8;
+      font-size: .95rem;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 16px;
+    }
+    input[type="password"]:focus { border-color: #00d4f5; box-shadow: 0 0 0 3px rgba(0,212,245,.12); }
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #00d4f5, #005fa3);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: .95rem;
+      font-weight: 700;
+      padding: 13px;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    button:hover { opacity: .9; }
+    .error {
+      background: rgba(239,71,111,.12);
+      border: 1px solid rgba(239,71,111,.4);
+      border-radius: 8px;
+      color: #ef476f;
+      font-size: .82rem;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .footer-text { font-size: .7rem; color: #6a8baa; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="logo">🐟</div>
+    <h1>Dashboard Monitoring Budidaya</h1>
+    <p>Instalasi Plasma Nutfah Perikanan Air Tawar Cijeruk</p>
+
+    {% if error %}
+    <div class="error"><i class="fa fa-circle-xmark"></i> {{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Masukkan password..." autofocus required />
+      <button type="submit"><i class="fa fa-right-to-bracket me-2"></i>Masuk</button>
+    </form>
+
+    <p class="footer-text">Hubungi admin jika lupa password.</p>
+  </div>
+</body>
+</html>

@@ -4,14 +4,49 @@ Instalasi Plasma Nutfah Perikanan Air Tawar Cijeruk
 Jalankan: python dashboard.py
 """
 import json
+import os
 from datetime import datetime
+from functools import wraps
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 app = Flask(__name__, template_folder="templates")
+app.secret_key = os.environ.get("SECRET_KEY", "cijeruk-plasma-nutfah-2025")
+
+# Password login — ubah via environment variable DASHBOARD_PASSWORD di PythonAnywhere
+DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "cijeruk2025")
 
 DATA_FILE = Path(__file__).parent / "data" / "aquaculture_data.json"
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect(url_for("login", next=request.path))
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        if request.form.get("password") == DASHBOARD_PASSWORD:
+            session["logged_in"] = True
+            next_url = request.args.get("next") or "/"
+            return redirect(next_url)
+        error = "Password salah. Coba lagi."
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 # ── Rentang parameter optimal ────────────────────────────────────────────────
 
@@ -271,6 +306,7 @@ def blok_summary(data: dict) -> list[dict]:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
+@login_required
 def index():
     data = load_data()
     entries = data.get("entries", [])
@@ -288,6 +324,7 @@ def index():
 
 
 @app.route("/blok/<nama>")
+@login_required
 def blok_view(nama: str):
     """Tampilan khusus satu blok — bisa di-bookmark oleh petugas blok tsb."""
     data = load_data()
@@ -307,6 +344,7 @@ def blok_view(nama: str):
 
 
 @app.route("/api/data", methods=["POST"])
+@login_required
 def post_data():
     body = request.get_json(silent=True) or {}
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -352,6 +390,7 @@ def post_data():
 
 
 @app.route("/api/data", methods=["GET"])
+@login_required
 def get_data():
     blok  = request.args.get("blok")
     kolam = request.args.get("kolam")
@@ -366,18 +405,21 @@ def get_data():
 
 
 @app.route("/api/summary", methods=["GET"])
+@login_required
 def get_summary():
     data = load_data()
     return jsonify(blok_summary(data))
 
 
 @app.route("/api/blok", methods=["GET"])
+@login_required
 def get_blok():
     data = load_data()
     return jsonify(data.get("blok_list", []))
 
 
 @app.route("/api/blok", methods=["POST"])
+@login_required
 def add_blok():
     body = request.get_json(silent=True) or {}
     nama = body.get("nama", "").strip()
@@ -394,6 +436,7 @@ def add_blok():
 
 
 @app.route("/api/blok/<nama>/kolam", methods=["POST"])
+@login_required
 def add_kolam_to_blok(nama: str):
     body = request.get_json(silent=True) or {}
     kolam_nama = body.get("kolam", "").strip()
@@ -410,6 +453,7 @@ def add_kolam_to_blok(nama: str):
 
 
 @app.route("/api/delete/<int:idx>", methods=["DELETE"])
+@login_required
 def delete_entry(idx: int):
     data = load_data()
     entries = data.get("entries", [])
