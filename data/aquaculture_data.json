@@ -16,7 +16,8 @@
       "survival_rate": 94.0,
       "padat_tebar": 22.0,
       "catatan": "Kondisi normal, pakan habis",
-      "assessment": "BAIK"
+      "assessment": "BAIK",
+      "blok": "Blok Depan"
     },
     {
       "timestamp": "2026-06-15 02:28",
@@ -34,12 +35,97 @@
       "survival_rate": 65.0,
       "padat_tebar": null,
       "catatan": "Ikan nampak kurang aktif pagi ini",
-      "assessment": "KRITIS"
+      "assessment": "KRITIS",
+      "blok": "Blok Depan"
+    },
+    {
+      "timestamp": "2026-06-15 02:42",
+      "blok": "Blok Depan",
+      "kolam": "Kolam D1",
+      "petugas": "Budi",
+      "jenis_ikan": "Mas",
+      "ph": 7.1,
+      "do_level": 6.2,
+      "suhu": 27.5,
+      "kecerahan": null,
+      "amonia": null,
+      "feeding_rate": 3.2,
+      "fcr": 1.4,
+      "jumlah_pakan": null,
+      "biomassa": null,
+      "survival_rate": 95.0,
+      "padat_tebar": null,
+      "catatan": "",
+      "assessment": "BAIK"
+    },
+    {
+      "timestamp": "2026-06-15 02:42",
+      "blok": "Blok Tengah",
+      "kolam": "Kolam T2",
+      "petugas": "Sari",
+      "jenis_ikan": "Nila",
+      "ph": 6.3,
+      "do_level": 4.2,
+      "suhu": 31.0,
+      "kecerahan": null,
+      "amonia": null,
+      "feeding_rate": 4.1,
+      "fcr": 2.1,
+      "jumlah_pakan": null,
+      "biomassa": null,
+      "survival_rate": 78.0,
+      "padat_tebar": null,
+      "catatan": "",
+      "assessment": "PERHATIAN"
+    },
+    {
+      "timestamp": "2026-06-15 02:42",
+      "blok": "Blok Belakang",
+      "kolam": "Kolam B3",
+      "petugas": "Eko",
+      "jenis_ikan": "Lele",
+      "ph": 7.4,
+      "do_level": 7.1,
+      "suhu": 28.0,
+      "kecerahan": null,
+      "amonia": null,
+      "feeding_rate": 3.8,
+      "fcr": 1.3,
+      "jumlah_pakan": null,
+      "biomassa": null,
+      "survival_rate": 97.0,
+      "padat_tebar": null,
+      "catatan": "",
+      "assessment": "BAIK"
     }
   ],
-  "kolam_list": [
-    "Kolam 1",
-    "Kolam 2",
-    "Kolam 3"
+  "blok_list": [
+    {
+      "nama": "Blok Depan",
+      "kolam": [
+        "Kolam D1",
+        "Kolam D2",
+        "Kolam D3",
+        "Kolam D4"
+      ]
+    },
+    {
+      "nama": "Blok Tengah",
+      "kolam": [
+        "Kolam T1",
+        "Kolam T2",
+        "Kolam T3",
+        "Kolam T4"
+      ]
+    },
+    {
+      "nama": "Blok Belakang",
+      "kolam": [
+        "Kolam B1",
+        "Kolam B2",
+        "Kolam B3",
+        "Kolam B4"
+      ]
+    }
   ]
 }

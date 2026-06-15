@@ -4,7 +4,6 @@ Instalasi Plasma Nutfah Perikanan Air Tawar Cijeruk
 Jalankan: python dashboard.py
 """
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -27,14 +26,28 @@ PARAMS = {
     "survival_rate": {"min_kritis": 60,  "min_ok": 80,  "max_ok": 100,  "max_kritis": 100,  "unit": "%", "label": "Survival Rate"},
 }
 
+DEFAULT_BLOK = [
+    {"nama": "Blok Depan",   "kolam": ["Kolam D1", "Kolam D2", "Kolam D3", "Kolam D4"]},
+    {"nama": "Blok Tengah",  "kolam": ["Kolam T1", "Kolam T2", "Kolam T3", "Kolam T4"]},
+    {"nama": "Blok Belakang","kolam": ["Kolam B1", "Kolam B2", "Kolam B3", "Kolam B4"]},
+]
 
-# ── Data persistence ─────────────────────────────────────────────────────────
+
+# ── Data persistence ──────────────────────────────────────────────────────────
 
 def load_data() -> dict:
     if DATA_FILE.exists():
         with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {"entries": [], "kolam_list": ["Kolam 1", "Kolam 2", "Kolam 3"]}
+            d = json.load(f)
+        # Migrasi data lama yang belum punya blok_list
+        if "blok_list" not in d:
+            d["blok_list"] = DEFAULT_BLOK
+            # Pindahkan kolam_list lama ke Blok Umum
+            old_kolam = d.pop("kolam_list", [])
+            if old_kolam:
+                d["blok_list"].insert(0, {"nama": "Blok Umum", "kolam": old_kolam})
+        return d
+    return {"entries": [], "blok_list": DEFAULT_BLOK}
 
 
 def save_data(data: dict):
@@ -43,16 +56,21 @@ def save_data(data: dict):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+def all_kolam(data: dict) -> list[str]:
+    """Gabungan semua nama kolam dari semua blok."""
+    result = []
+    for b in data.get("blok_list", []):
+        result.extend(b.get("kolam", []))
+    return result
+
+
 # ── Assessment engine ─────────────────────────────────────────────────────────
 
 def _grade(key: str, value: float) -> str:
     p = PARAMS.get(key)
     if p is None or value is None:
         return "BAIK"
-    lo_k = p["min_kritis"]
-    lo_w = p["min_ok"]
-    hi_w = p["max_ok"]
-    hi_k = p["max_kritis"]
+    lo_k, lo_w, hi_w, hi_k = p["min_kritis"], p["min_ok"], p["max_ok"], p["max_kritis"]
     if (lo_k is not None and value < lo_k) or (hi_k is not None and value > hi_k):
         return "KRITIS"
     if (lo_w is not None and value < lo_w) or (hi_w is not None and value > hi_w):
@@ -63,7 +81,6 @@ def _grade(key: str, value: float) -> str:
 def assess(entry: dict) -> dict:
     grades = {}
     issues = []
-
     check_fields = {
         "ph": entry.get("ph"),
         "do": entry.get("do_level"),
@@ -74,23 +91,15 @@ def assess(entry: dict) -> dict:
         "fcr": entry.get("fcr"),
         "survival_rate": entry.get("survival_rate"),
     }
-
     for key, val in check_fields.items():
         if val is None:
             continue
         grade = _grade(key, val)
         grades[key] = grade
         p = PARAMS[key]
-        if grade == "KRITIS":
+        if grade in ("KRITIS", "PERHATIAN"):
             issues.append({
-                "status": "KRITIS",
-                "label": p["label"],
-                "nilai": f"{val} {p['unit']}".strip(),
-                "pesan": _issue_message(key, val, grade),
-            })
-        elif grade == "PERHATIAN":
-            issues.append({
-                "status": "PERHATIAN",
+                "status": grade,
                 "label": p["label"],
                 "nilai": f"{val} {p['unit']}".strip(),
                 "pesan": _issue_message(key, val, grade),
@@ -103,8 +112,8 @@ def assess(entry: dict) -> dict:
     else:
         overall = "BAIK"
 
-    recs = _recommendations(entry, issues)
-    return {"overall": overall, "grades": grades, "issues": issues, "recommendations": recs}
+    return {"overall": overall, "grades": grades, "issues": issues,
+            "recommendations": _recommendations(entry, issues)}
 
 
 def _issue_message(key: str, val: float, grade: str) -> str:
@@ -157,7 +166,7 @@ def _recommendations(entry: dict, issues: list) -> list:
         if ph < 6.5:
             recs.append("🪨 Taburkan kapur pertanian (CaCO₃) 10–20 kg/ha untuk menaikkan pH secara bertahap.")
             recs.append("🔄 Lakukan partial water change 20–30% dengan air pH netral.")
-        elif ph > 8.5:
+        else:
             recs.append("💧 Ganti air 30–40% dengan air segar untuk menurunkan pH.")
             recs.append("🌿 Kurangi pertumbuhan alga berlebih — aerasi dan kurangi paparan sinar matahari.")
 
@@ -167,8 +176,7 @@ def _recommendations(entry: dict, issues: list) -> list:
         recs.append("🚫 Hentikan pemberian pakan sementara hingga DO kembali normal (>5 mg/L).")
 
     if "Suhu" in issue_keys:
-        suhu = entry.get("suhu", 27)
-        if suhu > 30:
+        if entry.get("suhu", 27) > 30:
             recs.append("⛱️ Pasang paranet 60–70% untuk mengurangi intensitas sinar matahari.")
             recs.append("🌊 Tambah debit air masuk — air baru biasanya lebih dingin.")
             recs.append("⏰ Beri pakan di pagi hari (06:00–07:00) saat suhu masih rendah.")
@@ -186,12 +194,11 @@ def _recommendations(entry: dict, issues: list) -> list:
         if kec < 30:
             recs.append("🔬 Air terlalu keruh — cek curah hujan, erosi, atau bloom fitoplankton.")
             recs.append("🌊 Lakukan water change 30% dan kurangi pemberian pakan 24 jam.")
-        elif kec > 60:
+        else:
             recs.append("🌱 Air terlalu jernih — pupuk kolam dengan pupuk organik untuk tumbuhkan fitoplankton.")
 
     if "Feeding Rate" in issue_keys:
-        fr = entry.get("feeding_rate", 3)
-        if fr > 5:
+        if entry.get("feeding_rate", 3) > 5:
             recs.append("📊 Lakukan sampling biomassa (timbang 30 ekor sampel) untuk hitung ulang dosis pakan.")
             recs.append("⬇️ Kurangi dosis pakan 20% dan pantau nafsu makan ikan.")
         else:
@@ -214,6 +221,53 @@ def _recommendations(entry: dict, issues: list) -> list:
     return recs
 
 
+# ── Blok summary helper ───────────────────────────────────────────────────────
+
+def blok_summary(data: dict) -> list[dict]:
+    """Status terbaru per blok berdasarkan entri terakhir masing-masing kolam."""
+    entries = data.get("entries", [])
+    blok_list = data.get("blok_list", [])
+
+    # Cari entri terakhir per (blok, kolam)
+    latest_per_kolam: dict[str, dict] = {}
+    for e in entries:
+        key = f"{e.get('blok','')}|{e.get('kolam','')}"
+        latest_per_kolam[key] = e
+
+    result = []
+    ORDER = {"KRITIS": 0, "PERHATIAN": 1, "BAIK": 2, "NODATA": 3}
+    for blok in blok_list:
+        nama = blok["nama"]
+        kolam_statuses = []
+        kolam_details = []
+        for k in blok.get("kolam", []):
+            key = f"{nama}|{k}"
+            entry = latest_per_kolam.get(key)
+            if entry:
+                a = assess(entry)
+                st = a["overall"]
+                ts = entry.get("timestamp", "")
+            else:
+                st = "NODATA"
+                ts = ""
+            kolam_statuses.append(st)
+            kolam_details.append({"kolam": k, "status": st, "timestamp": ts})
+
+        # Blok status = status terburuk kolam-kolamnya
+        worst = min(kolam_statuses, key=lambda s: ORDER.get(s, 9)) if kolam_statuses else "NODATA"
+        result.append({
+            "nama": nama,
+            "status": worst,
+            "kolam_count": len(blok.get("kolam", [])),
+            "kritis_count": kolam_statuses.count("KRITIS"),
+            "perhatian_count": kolam_statuses.count("PERHATIAN"),
+            "baik_count": kolam_statuses.count("BAIK"),
+            "nodata_count": kolam_statuses.count("NODATA"),
+            "kolam": kolam_details,
+        })
+    return result
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
@@ -222,13 +276,33 @@ def index():
     entries = data.get("entries", [])
     latest = entries[-1] if entries else None
     latest_assess = assess(latest) if latest else None
-    kolam_list = data.get("kolam_list", ["Kolam 1"])
     return render_template(
         "aquaculture.html",
         latest=latest,
         assessment=latest_assess,
-        kolam_list=kolam_list,
+        blok_list=data.get("blok_list", []),
+        blok_summary=blok_summary(data),
         total_entries=len(entries),
+        active_blok=None,
+    )
+
+
+@app.route("/blok/<nama>")
+def blok_view(nama: str):
+    """Tampilan khusus satu blok — bisa di-bookmark oleh petugas blok tsb."""
+    data = load_data()
+    entries = data.get("entries", [])
+    blok_entries = [e for e in entries if e.get("blok") == nama]
+    latest = blok_entries[-1] if blok_entries else None
+    latest_assess = assess(latest) if latest else None
+    return render_template(
+        "aquaculture.html",
+        latest=latest,
+        assessment=latest_assess,
+        blok_list=data.get("blok_list", []),
+        blok_summary=blok_summary(data),
+        total_entries=len(blok_entries),
+        active_blok=nama,
     )
 
 
@@ -246,22 +320,21 @@ def post_data():
 
     entry = {
         "timestamp": now,
+        "blok": body.get("blok", ""),
         "kolam": body.get("kolam", ""),
+        "petugas": body.get("petugas", ""),
         "jenis_ikan": body.get("jenis_ikan", ""),
-        # kualitas air
         "ph": _float("ph"),
         "do_level": _float("do_level"),
         "suhu": _float("suhu"),
         "kecerahan": _float("kecerahan"),
         "amonia": _float("amonia"),
-        # pakan
         "feeding_rate": _float("feeding_rate"),
         "fcr": _float("fcr"),
         "jumlah_pakan": _float("jumlah_pakan"),
         "biomassa": _float("biomassa"),
         "survival_rate": _float("survival_rate"),
         "padat_tebar": _float("padat_tebar"),
-        # catatan
         "catatan": body.get("catatan", ""),
     }
 
@@ -270,50 +343,70 @@ def post_data():
 
     data = load_data()
     data["entries"].append(entry)
-    # Simpan max 500 entri terakhir per kolam agar file tidak membengkak
-    if len(data["entries"]) > 500:
-        data["entries"] = data["entries"][-500:]
+    if len(data["entries"]) > 1000:
+        data["entries"] = data["entries"][-1000:]
     save_data(data)
 
-    return jsonify({"ok": True, "entry": entry, "assessment": result})
+    return jsonify({"ok": True, "entry": entry, "assessment": result,
+                    "blok_summary": blok_summary(data)})
 
 
 @app.route("/api/data", methods=["GET"])
 def get_data():
+    blok  = request.args.get("blok")
     kolam = request.args.get("kolam")
-    limit = int(request.args.get("limit", 20))
-    data = load_data()
+    limit = int(request.args.get("limit", 30))
+    data  = load_data()
     entries = data.get("entries", [])
+    if blok:
+        entries = [e for e in entries if e.get("blok") == blok]
     if kolam:
         entries = [e for e in entries if e.get("kolam") == kolam]
-    entries = entries[-limit:]
-    return jsonify(entries)
+    return jsonify(entries[-limit:])
 
 
-@app.route("/api/assess", methods=["POST"])
-def post_assess():
-    body = request.get_json(silent=True) or {}
-    result = assess(body)
-    return jsonify(result)
-
-
-@app.route("/api/kolam", methods=["GET"])
-def get_kolam():
+@app.route("/api/summary", methods=["GET"])
+def get_summary():
     data = load_data()
-    return jsonify(data.get("kolam_list", []))
+    return jsonify(blok_summary(data))
 
 
-@app.route("/api/kolam", methods=["POST"])
-def add_kolam():
+@app.route("/api/blok", methods=["GET"])
+def get_blok():
+    data = load_data()
+    return jsonify(data.get("blok_list", []))
+
+
+@app.route("/api/blok", methods=["POST"])
+def add_blok():
     body = request.get_json(silent=True) or {}
     nama = body.get("nama", "").strip()
     if not nama:
+        return jsonify({"ok": False, "error": "Nama blok kosong"}), 400
+    data = load_data()
+    blok_list = data.get("blok_list", [])
+    if any(b["nama"] == nama for b in blok_list):
+        return jsonify({"ok": False, "error": "Blok sudah ada"}), 400
+    blok_list.append({"nama": nama, "kolam": []})
+    data["blok_list"] = blok_list
+    save_data(data)
+    return jsonify({"ok": True, "blok_list": blok_list})
+
+
+@app.route("/api/blok/<nama>/kolam", methods=["POST"])
+def add_kolam_to_blok(nama: str):
+    body = request.get_json(silent=True) or {}
+    kolam_nama = body.get("kolam", "").strip()
+    if not kolam_nama:
         return jsonify({"ok": False, "error": "Nama kolam kosong"}), 400
     data = load_data()
-    if nama not in data.get("kolam_list", []):
-        data.setdefault("kolam_list", []).append(nama)
-        save_data(data)
-    return jsonify({"ok": True, "kolam_list": data["kolam_list"]})
+    for blok in data.get("blok_list", []):
+        if blok["nama"] == nama:
+            if kolam_nama not in blok["kolam"]:
+                blok["kolam"].append(kolam_nama)
+            save_data(data)
+            return jsonify({"ok": True, "blok": blok})
+    return jsonify({"ok": False, "error": "Blok tidak ditemukan"}), 404
 
 
 @app.route("/api/delete/<int:idx>", methods=["DELETE"])
@@ -331,6 +424,7 @@ def delete_entry(idx: int):
 if __name__ == "__main__":
     print("=" * 60)
     print("  Dashboard Plasma Nutfah Perikanan Air Tawar Cijeruk")
-    print("  Buka browser: http://localhost:5050")
+    print("  Buka browser : http://localhost:5050")
+    print("  Per blok     : http://localhost:5050/blok/Blok%20A")
     print("=" * 60)
     app.run(host="0.0.0.0", port=5050, debug=True)
