@@ -230,12 +230,17 @@
           </div>
           <div class="col-12">
             <label class="form-label">Jenis Ikan</label>
-            <select class="form-select" id="jenis_ikan" name="jenis_ikan">
-              <option>Mas</option><option>Nila</option><option>Lele</option>
-              <option>Gurame</option><option>Patin</option><option>Bawal</option>
-              <option>Tambakan</option><option>Sepat</option><option>Tawes</option>
-              <option>Nilem</option><option>Lainnya</option>
-            </select>
+            <div style="display:flex;gap:6px;">
+              <select class="form-select" id="jenis_ikan" name="jenis_ikan">
+                {% for ikan in ikan_list %}
+                <option value="{{ ikan }}">{{ ikan }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" onclick="addIkan()" title="Tambah jenis ikan baru"
+                style="flex-shrink:0;background:rgba(0,212,245,.1);border:1px solid var(--border);border-radius:8px;padding:0 12px;color:var(--cyan);cursor:pointer;font-size:.85rem;">
+                <i class="fa fa-plus"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -712,6 +717,25 @@ document.getElementById('dataForm').addEventListener('submit', async function(e)
   }catch(err){ showToast('Gagal: '+err.message,'error'); }
   finally{ btn.disabled=false; btn.innerHTML='<i class="fa fa-paper-plane me-2"></i>Simpan & Analisis'; }
 });
+
+// ── Add ikan ─────────────────────────────────────────────────────────────────
+async function addIkan(){
+  const nama = prompt('Nama jenis ikan baru (contoh: Koi, Grasscarp, Jelawat):');
+  if(!nama?.trim()) return;
+  const res = await fetch('/api/ikan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nama:nama.trim()})});
+  const data = await res.json();
+  if(data.ok){
+    const sel = document.getElementById('jenis_ikan');
+    const exists = [...sel.options].some(o=>o.value===nama.trim());
+    if(!exists){
+      const opt = document.createElement('option');
+      opt.value = nama.trim(); opt.textContent = nama.trim();
+      sel.appendChild(opt);
+    }
+    sel.value = nama.trim();
+    showToast(`Jenis ikan "${nama.trim()}" ditambahkan`,'success');
+  } else { showToast('Error: '+data.error,'error'); }
+}
 
 // ── Add blok / kolam ──────────────────────────────────────────────────────────
 async function addBlok(){

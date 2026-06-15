@@ -67,6 +67,11 @@ DEFAULT_BLOK = [
     {"nama": "Blok Belakang","kolam": ["Kolam B1", "Kolam B2", "Kolam B3", "Kolam B4"]},
 ]
 
+DEFAULT_IKAN = [
+    "Mas", "Nila", "Lele", "Gurame", "Patin", "Bawal",
+    "Tambakan", "Sepat", "Tawes", "Nilem",
+]
+
 
 # ── Data persistence ──────────────────────────────────────────────────────────
 
@@ -77,12 +82,14 @@ def load_data() -> dict:
         # Migrasi data lama yang belum punya blok_list
         if "blok_list" not in d:
             d["blok_list"] = DEFAULT_BLOK
-            # Pindahkan kolam_list lama ke Blok Umum
             old_kolam = d.pop("kolam_list", [])
             if old_kolam:
                 d["blok_list"].insert(0, {"nama": "Blok Umum", "kolam": old_kolam})
+        # Migrasi: tambah ikan_list jika belum ada
+        if "ikan_list" not in d:
+            d["ikan_list"] = DEFAULT_IKAN
         return d
-    return {"entries": [], "blok_list": DEFAULT_BLOK}
+    return {"entries": [], "blok_list": DEFAULT_BLOK, "ikan_list": DEFAULT_IKAN}
 
 
 def save_data(data: dict):
@@ -317,6 +324,7 @@ def index():
         latest=latest,
         assessment=latest_assess,
         blok_list=data.get("blok_list", []),
+        ikan_list=data.get("ikan_list", DEFAULT_IKAN),
         blok_summary=blok_summary(data),
         total_entries=len(entries),
         active_blok=None,
@@ -337,6 +345,7 @@ def blok_view(nama: str):
         latest=latest,
         assessment=latest_assess,
         blok_list=data.get("blok_list", []),
+        ikan_list=data.get("ikan_list", DEFAULT_IKAN),
         blok_summary=blok_summary(data),
         total_entries=len(blok_entries),
         active_blok=nama,
@@ -463,6 +472,42 @@ def delete_entry(idx: int):
         save_data(data)
         return jsonify({"ok": True})
     return jsonify({"ok": False, "error": "Index tidak valid"}), 404
+
+
+@app.route("/api/ikan", methods=["GET"])
+@login_required
+def get_ikan():
+    data = load_data()
+    return jsonify(data.get("ikan_list", DEFAULT_IKAN))
+
+
+@app.route("/api/ikan", methods=["POST"])
+@login_required
+def add_ikan():
+    body = request.get_json(silent=True) or {}
+    nama = body.get("nama", "").strip()
+    if not nama:
+        return jsonify({"ok": False, "error": "Nama ikan kosong"}), 400
+    data = load_data()
+    ikan_list = data.get("ikan_list", list(DEFAULT_IKAN))
+    if nama not in ikan_list:
+        ikan_list.append(nama)
+        data["ikan_list"] = ikan_list
+        save_data(data)
+    return jsonify({"ok": True, "ikan_list": ikan_list})
+
+
+@app.route("/api/ikan/<nama>", methods=["DELETE"])
+@login_required
+def delete_ikan(nama: str):
+    data = load_data()
+    ikan_list = data.get("ikan_list", list(DEFAULT_IKAN))
+    if nama in ikan_list:
+        ikan_list.remove(nama)
+        data["ikan_list"] = ikan_list
+        save_data(data)
+        return jsonify({"ok": True, "ikan_list": ikan_list})
+    return jsonify({"ok": False, "error": "Ikan tidak ditemukan"}), 404
 
 
 if __name__ == "__main__":
