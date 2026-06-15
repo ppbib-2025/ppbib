@@ -1,5 +1,5 @@
 require("dotenv").config({ path: "../.env" });
-const { Client, LocalAuth } = require("whatsapp-web.js");
+const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const express = require("express");
 const fs = require("fs");
@@ -49,6 +49,23 @@ app.post("/send", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Gagal kirim:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/send-image", async (req, res) => {
+  const { phone, imageBase64, caption } = req.body;
+  if (!phone || !imageBase64) {
+    return res.status(400).json({ error: "phone dan imageBase64 wajib diisi" });
+  }
+  try {
+    const chatId = phone.replace(/[^0-9]/g, "") + "@c.us";
+    const media = new MessageMedia("image/png", imageBase64, "chart.png");
+    await client.sendMessage(chatId, media, { caption: caption || "" });
+    console.log(`✓ Gambar terkirim ke ${phone}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Gagal kirim gambar:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
