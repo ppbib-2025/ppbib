@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Monitoring – Plasma Nutfah Perikanan Air Tawar Cijeruk</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-dark:    #06112a;
+      --bg-card:    #0d1f3c;
+      --bg-input:   #0a1628;
+      --border:     #1a3360;
+      --cyan:       #00d4f5;
+      --cyan-dim:   #0096b7;
+      --teal:       #06d6a0;
+      --amber:      #ffd166;
+      --coral:      #ef476f;
+      --text:       #cde4f8;
+      --text-dim:   #6a8baa;
+      --shadow:     0 4px 24px rgba(0,0,0,0.5);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Navbar ── */
+    .navbar-custom {
+      background: linear-gradient(135deg, #041020 0%, #0a2040 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.6);
+    }
+    .navbar-custom .logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--cyan), #005fa3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .navbar-custom .title-block h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin: 0;
+      letter-spacing: 0.3px;
+    }
+    .navbar-custom .title-block p {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin: 0;
+    }
+    .navbar-custom .ms-auto {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #clock {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+
+    /* ── Layout ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      padding: 20px 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Cards ── */
+    .card-dark {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-dark .card-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-dark .card-title i { color: var(--cyan); }
+
+    /* ── Status Banner ── */
+    .status-banner {
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      border: 2px solid transparent;
+      transition: all 0.4s;
+    }
+    .status-banner.BAIK    { background: rgba(6,214,160,0.12); border-color: var(--teal);  }
+    .status-banner.PERHATIAN { background: rgba(255,209,102,0.1); border-color: var(--amber); }
+    .status-banner.KRITIS  { background: rgba(239,71,111,0.12); border-color: var(--coral); animation: pulse-red 2s infinite; }
+    .status-banner.NODATA  { background: rgba(255,255,255,0.04); border-color: var(--border); }
+    @keyframes pulse-red {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,71,111,0.4); }
+      50%      { box-shadow: 0 0 20px 6px rgba(239,71,111,0.2); }
+    }
+    .status-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .status-icon.BAIK      { background: rgba(6,214,160,0.2);  color: var(--teal);  }
+    .status-icon.PERHATIAN { background: rgba(255,209,102,0.2); color: var(--amber); }
+    .status-icon.KRITIS    { background: rgba(239,71,111,0.2);  color: var(--coral); }
+    .status-icon.NODATA    { background: rgba(255,255,255,0.07); color: var(--text-dim); }
+    .status-text h2 { font-size: 1.15rem; font-weight: 700; margin: 0 0 2px; }
+    .status-text p  { font-size: 0.8rem;  color: var(--text-dim); margin: 0; }
+
+    /* ── Metric Cards ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent, var(--cyan));
+    }
+    .metric-card.BAIK    { --accent: var(--teal); }
+    .metric-card.PERHATIAN { --accent: var(--amber); }
+    .metric-card.KRITIS  { --accent: var(--coral); }
+    .metric-card .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .metric-card .value { font-size: 1.5rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .metric-card .unit  { font-size: 0.75rem; color: var(--text-dim); }
+    .metric-card .badge-grade {
+      position: absolute;
+      top: 10px; right: 12px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .badge-BAIK      { background: rgba(6,214,160,0.2);  color: var(--teal);  }
+    .badge-PERHATIAN { background: rgba(255,209,102,0.2); color: var(--amber); }
+    .badge-KRITIS    { background: rgba(239,71,111,0.2);  color: var(--coral); }
+    .badge-NODATA    { background: rgba(255,255,255,0.07); color: var(--text-dim); }
+
+    /* ── Form ── */
+    .form-label { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 4px; }
+    .form-control, .form-select {
+      background: var(--bg-input) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text) !important;
+      border-radius: 8px !important;
+      font-size: 0.875rem;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 0 3px rgba(0,212,245,0.15) !important;
+    }
+    .form-control::placeholder { color: var(--text-dim) !important; opacity: 0.7; }
+    .section-divider {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--cyan-dim);
+      margin: 18px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, var(--cyan), #005fa3);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 12px;
+      width: 100%;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 16px;
+    }
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Recommendations ── */
+    .rec-list { list-style: none; padding: 0; margin: 0; }
+    .rec-list li {
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      background: rgba(255,255,255,0.04);
+      border-left: 3px solid var(--cyan-dim);
+    }
+
+    /* ── Issues ── */
+    .issue-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+    }
+    .issue-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .dot-KRITIS    { background: var(--coral); box-shadow: 0 0 8px var(--coral); }
+    .dot-PERHATIAN { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+    .issue-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px; }
+    .issue-msg   { font-size: 0.83rem; color: var(--text); }
+
+    /* ── Charts ── */
+    .chart-wrap { position: relative; height: 200px; }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 1200px) {
+      .charts-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── History Table ── */
+    .table-dark-custom {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .table-dark-custom th {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-dim);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+    }
+    .table-dark-custom td {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(26,51,96,0.5);
+      vertical-align: middle;
+    }
+    .table-dark-custom tr:hover td { background: rgba(255,255,255,0.03); }
+    .badge-status {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .table-scroll { max-height: 360px; overflow-y: auto; }
+
+    /* ── Misc ── */
+    .add-kolam-btn {
+      font-size: 0.75rem;
+      color: var(--cyan);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 4px;
+    }
+    .add-kolam-btn:hover { text-decoration: underline; }
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+    .toast-custom {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: var(--text);
+      font-size: 0.85rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+      max-width: 340px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to   { transform: translateX(0);   opacity: 1; }
+    }
+    .no-data-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+    .no-data-msg i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.4; }
+    .optional-tag {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      background: rgba(255,255,255,0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-left: 4px;
+    }
+    #last-update { font-size: 0.72rem; color: var(--text-dim); }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar-custom">
+  <div class="logo">🐟</div>
+  <div class="title-block">
+    <h1>Dashboard Monitoring Budidaya</h1>
+    <p>Instalasi Plasma Nutfah Perikanan Air Tawar Cijeruk</p>
+  </div>
+  <div class="ms-auto">
+    <span id="clock"></span>
+    <span id="last-update">{% if latest %}Update: {{ latest.timestamp }}{% else %}Belum ada data{% endif %}</span>
+  </div>
+</nav>
+
+<div class="main-grid">
+
+  <!-- ── LEFT: Form Input ── -->
+  <div>
+    <div class="card-dark">
+      <div class="card-title"><i class="fa fa-plus-circle"></i> Input Data Monitoring</div>
+
+      <form id="dataForm">
+        <!-- Identitas -->
+        <div class="row g-2">
+          <div class="col-7">
+            <label class="form-label">Kolam / Bak</label>
+            <select class="form-select" id="kolam" name="kolam">
+              {% for k in kolam_list %}
+              <option value="{{ k }}">{{ k }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-5">
+            <label class="form-label">Jenis Ikan</label>
+            <select class="form-select" id="jenis_ikan" name="jenis_ikan">
+              <option value="Mas">Mas</option>
+              <option value="Nila">Nila</option>
+              <option value="Lele">Lele</option>
+              <option value="Gurame">Gurame</option>
+              <option value="Patin">Patin</option>
+              <option value="Bawal">Bawal</option>
+              <option value="Tambakan">Tambakan</option>
+              <option value="Sepat">Sepat</option>
+              <option value="Tawes">Tawes</option>
+              <option value="Nilem">Nilem</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-divider"><i class="fa fa-droplet"></i> Kualitas Air</div>
+        <div class="row g-2">
+          <div class="col-4">
+            <label class="form-label">pH</label>
+            <input type="number" step="0.1" min="0" max="14" class="form-control" id="ph" name="ph" placeholder="7.0" required />
+          </div>
+          <div class="col-4">
+            <label class="form-label">DO (mg/L)</label>
+            <input type="number" step="0.1" min="0" class="form-control" id="do_level" name="do_level" placeholder="6.5" required />
+          </div>
+          <div class="col-4">
+            <label class="form-label">Suhu (°C)</label>
+            <input type="number" step="0.1" min="0" class="form-control" id="suhu" name="suhu" placeholder="27" required />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Kecerahan (cm) <span class="optional-tag">opsional</span></label>
+            <input type="number" step="1" min="0" class="form-control" id="kecerahan" name="kecerahan" placeholder="40" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Amonia (mg/L) <span class="optional-tag">opsional</span></label>
+            <input type="number" step="0.001" min="0" class="form-control" id="amonia" name="amonia" placeholder="0.01" />
+          </div>
+        </div>
+
+        <div class="section-divider"><i class="fa fa-fish"></i> Data Pakan & Budidaya</div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label">Feeding Rate (%/hari)</label>
+            <input type="number" step="0.1" min="0" class="form-control" id="feeding_rate" name="feeding_rate" placeholder="3.0" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">FCR</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="fcr" name="fcr" placeholder="1.3" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Jumlah Pakan (kg/hari)</label>
+            <input type="number" step="0.1" min="0" class="form-control" id="jumlah_pakan" name="jumlah_pakan" placeholder="5.0" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Biomassa Ikan (kg)</label>
+            <input type="number" step="1" min="0" class="form-control" id="biomassa" name="biomassa" placeholder="150" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Survival Rate (%)</label>
+            <input type="number" step="0.1" min="0" max="100" class="form-control" id="survival_rate" name="survival_rate" placeholder="95" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Padat Tebar (ekor/m²)</label>
+            <input type="number" step="1" min="0" class="form-control" id="padat_tebar" name="padat_tebar" placeholder="20" />
+          </div>
+        </div>
+
+        <div class="section-divider"><i class="fa fa-note-sticky"></i> Catatan</div>
+        <textarea class="form-control" id="catatan" name="catatan" rows="2" placeholder="Kondisi khusus, perlakuan, observasi..."></textarea>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <i class="fa fa-paper-plane me-2"></i>Simpan & Analisis
+        </button>
+      </form>
+
+      <div style="margin-top:12px;">
+        <button class="add-kolam-btn" onclick="addKolam()">
+          <i class="fa fa-plus me-1"></i>Tambah kolam baru
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Dashboard ── -->
+  <div>
+
+    <!-- Status Banner -->
+    <div id="statusBanner" class="status-banner {% if assessment %}{{ assessment.overall }}{% else %}NODATA{% endif %}">
+      <div id="statusIcon" class="status-icon {% if assessment %}{{ assessment.overall }}{% else %}NODATA{% endif %}">
+        {% if not assessment %}
+          <i class="fa fa-circle-question"></i>
+        {% elif assessment.overall == 'BAIK' %}
+          <i class="fa fa-circle-check"></i>
+        {% elif assessment.overall == 'PERHATIAN' %}
+          <i class="fa fa-triangle-exclamation"></i>
+        {% else %}
+          <i class="fa fa-circle-xmark"></i>
+        {% endif %}
+      </div>
+      <div class="status-text">
+        <h2 id="statusTitle">
+          {% if not assessment %}Belum Ada Data
+          {% elif assessment.overall == 'BAIK' %}Kondisi Baik
+          {% elif assessment.overall == 'PERHATIAN' %}Perlu Perhatian
+          {% else %}Kondisi Kritis!
+          {% endif %}
+        </h2>
+        <p id="statusSub">
+          {% if not assessment %}Input data monitoring pertama untuk memulai analisis.
+          {% elif assessment.overall == 'BAIK' %}Semua parameter dalam rentang optimal. Pantau terus!
+          {% elif assessment.overall == 'PERHATIAN' %}{{ assessment.issues|length }} parameter perlu perhatian. Tindakan segera disarankan.
+          {% else %}{{ assessment.issues|length }} parameter kritis! Segera tangani sebelum terjadi kerugian.
+          {% endif %}
+        </p>
+      </div>
+      {% if total_entries > 0 %}
+      <div class="ms-auto text-end" style="flex-shrink:0;">
+        <div style="font-size:1.6rem;font-weight:700;color:var(--cyan);">{{ total_entries }}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">total data</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="metrics-grid" id="metricsGrid">
+      {% set wq_labels = [
+        ('pH', 'ph', '', assessment.grades.ph if assessment else None, latest.ph if latest else None),
+        ('DO', 'do_level', 'mg/L', assessment.grades.do if assessment else None, latest.do_level if latest else None),
+        ('Suhu', 'suhu', '°C', assessment.grades.suhu if assessment else None, latest.suhu if latest else None),
+        ('Kecerahan', 'kecerahan', 'cm', assessment.grades.kecerahan if assessment else None, latest.kecerahan if latest else None),
+        ('Feeding Rate', 'feeding_rate', '%', assessment.grades.feeding_rate if assessment else None, latest.feeding_rate if latest else None),
+        ('FCR', 'fcr', '', assessment.grades.fcr if assessment else None, latest.fcr if latest else None),
+        ('Biomassa', 'biomassa', 'kg', None, latest.biomassa if latest else None),
+        ('Survival Rate', 'survival_rate', '%', assessment.grades.survival_rate if assessment else None, latest.survival_rate if latest else None),
+      ] %}
+      {% for label, key, unit, grade, val in wq_labels %}
+      <div class="metric-card {{ grade or 'NODATA' }}">
+        <div class="label">{{ label }}</div>
+        <div class="value" id="metric-{{ key }}">
+          {% if val is not none %}{{ val }}{% else %}–{% endif %}
+        </div>
+        <div class="unit">{{ unit }}</div>
+        {% if grade %}
+        <span class="badge-grade badge-{{ grade }}">{{ grade }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-grid">
+      <div class="card-dark">
+        <div class="card-title"><i class="fa fa-flask"></i> pH</div>
+        <div class="chart-wrap"><canvas id="chartPh"></canvas></div>
+      </div>
+      <div class="card-dark">
+        <div class="card-title"><i class="fa fa-wind"></i> DO (mg/L)</div>
+        <div class="chart-wrap"><canvas id="chartDo"></canvas></div>
+      </div>
+      <div class="card-dark">
+        <div class="card-title"><i class="fa fa-thermometer-half"></i> Suhu (°C)</div>
+        <div class="chart-wrap"><canvas id="chartSuhu"></canvas></div>
+      </div>
+      <div class="card-dark">
+        <div class="card-title"><i class="fa fa-wheat-awn"></i> Feeding Rate (%)</div>
+        <div class="chart-wrap"><canvas id="chartFR"></canvas></div>
+      </div>
+      <div class="card-dark">
+        <div class="card-title"><i class="fa fa-chart-line"></i> FCR</div>
+        <div class="chart-wrap"><canvas id="chartFCR"></canvas></div>
+      </div>
+      <div class="card-dark">
+        <div class="card-title"><i class="fa fa-heart-pulse"></i> Survival Rate (%)</div>
+        <div class="chart-wrap"><canvas id="chartSR"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Issues & Recommendations Row -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-5">
+        <div class="card-dark" style="height:100%">
+          <div class="card-title"><i class="fa fa-triangle-exclamation"></i> Parameter Bermasalah</div>
+          <div id="issuesList">
+            {% if not assessment or not assessment.issues %}
+            <div class="no-data-msg"><i class="fa fa-circle-check"></i>Tidak ada masalah terdeteksi</div>
+            {% else %}
+            {% for issue in assessment.issues %}
+            <div class="issue-item">
+              <div class="issue-dot dot-{{ issue.status }}"></div>
+              <div>
+                <div class="issue-label" style="color:{% if issue.status == 'KRITIS' %}var(--coral){% else %}var(--amber){% endif %}">
+                  {{ issue.status }} — {{ issue.label }} ({{ issue.nilai }})
+                </div>
+                <div class="issue-msg">{{ issue.pesan }}</div>
+              </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <div class="card-dark" style="height:100%">
+          <div class="card-title"><i class="fa fa-lightbulb"></i> Rekomendasi Tindakan</div>
+          <ul class="rec-list" id="recList">
+            {% if not assessment or not assessment.recommendations %}
+            <div class="no-data-msg"><i class="fa fa-question-circle"></i>Input data untuk mendapatkan rekomendasi</div>
+            {% else %}
+            {% for rec in assessment.recommendations %}
+            <li>{{ rec }}</li>
+            {% endfor %}
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="card-dark">
+      <div class="card-title d-flex justify-content-between align-items-center w-100">
+        <span><i class="fa fa-clock-rotate-left"></i> Riwayat Data Terbaru</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-select" id="filterKolam" style="width:140px;font-size:0.75rem;padding:4px 8px;" onchange="loadHistory()">
+            <option value="">Semua Kolam</option>
+            {% for k in kolam_list %}
+            <option value="{{ k }}">{{ k }}</option>
+            {% endfor %}
+          </select>
+          <button onclick="loadHistory()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--text-dim);font-size:0.75rem;cursor:pointer;">
+            <i class="fa fa-refresh"></i>
+          </button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="table-dark-custom">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Kolam</th>
+              <th>Ikan</th>
+              <th>pH</th>
+              <th>DO</th>
+              <th>Suhu</th>
+              <th>FR%</th>
+              <th>FCR</th>
+              <th>SR%</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="11" class="no-data-msg"><i class="fa fa-spinner fa-spin"></i> Memuat...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /RIGHT -->
+</div><!-- /main-grid -->
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── Globals ────────────────────────────────────────────────────────────────
+const CHART_COLOR = { ok:'#06d6a0', warn:'#ffd166', crit:'#ef476f', line:'#00d4f5', grid:'rgba(26,51,96,0.7)', tick:'#6a8baa' };
+let charts = {};
+let historyData = [];
+
+// ── Clock ──────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('id-ID',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}) +
+    ' ' + now.toLocaleTimeString('id-ID');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Chart Factory ─────────────────────────────────────────────────────────
+function makeChart(id, label, color, minRef, maxRef) {
+  const ctx = document.getElementById(id).getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label,
+        data: [],
+        borderColor: color || CHART_COLOR.line,
+        backgroundColor: (color || CHART_COLOR.line) + '22',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 2,
+        pointBackgroundColor: [],
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d1f3c',
+          borderColor: '#1a3360',
+          borderWidth: 1,
+          titleColor: '#cde4f8',
+          bodyColor: '#cde4f8',
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: CHART_COLOR.tick, maxRotation: 40, font: { size: 9 }, maxTicksLimit: 8 },
+          grid: { color: CHART_COLOR.grid }
+        },
+        y: {
+          ticks: { color: CHART_COLOR.tick, font: { size: 10 } },
+          grid: { color: CHART_COLOR.grid },
+        }
+      }
+    }
+  });
+  // Add reference lines
+  if (minRef !== undefined && maxRef !== undefined) {
+    chart.options.plugins.annotation = {
+      annotations: {
+        min: { type:'line', yMin:minRef, yMax:minRef, borderColor:'#ffd16655', borderWidth:1, borderDash:[4,4] },
+        max: { type:'line', yMin:maxRef, yMax:maxRef, borderColor:'#ffd16655', borderWidth:1, borderDash:[4,4] },
+      }
+    };
+  }
+  return chart;
+}
+
+function initCharts() {
+  charts.ph    = makeChart('chartPh',   'pH',            CHART_COLOR.line, 6.5, 8.5);
+  charts.do    = makeChart('chartDo',   'DO (mg/L)',     CHART_COLOR.ok,   5,   12);
+  charts.suhu  = makeChart('chartSuhu', 'Suhu (°C)',     '#f77f00',        25,  30);
+  charts.fr    = makeChart('chartFR',   'Feeding Rate',  '#a8dadc',        2,   5);
+  charts.fcr   = makeChart('chartFCR',  'FCR',           CHART_COLOR.warn, null,1.8);
+  charts.sr    = makeChart('chartSR',   'Survival Rate', CHART_COLOR.ok,   85,  100);
+}
+
+function updateCharts(entries) {
+  const n = Math.min(entries.length, 20);
+  const recent = entries.slice(-n);
+  const labels = recent.map(e => {
+    const d = e.timestamp ? e.timestamp.split(' ') : ['',''];
+    return (d[1] || d[0]).substring(0,5);
+  });
+
+  function setChart(ch, field, gradeKey) {
+    const vals = recent.map(e => e[field] ?? null);
+    const colors = recent.map(e => {
+      const a = e.assessment;
+      const g = gradeKey;
+      // color per-point by grade stored in entry
+      return CHART_COLOR.ok;
+    });
+    ch.data.labels = labels;
+    ch.data.datasets[0].data = vals;
+    ch.data.datasets[0].pointBackgroundColor = vals.map(v =>
+      v === null ? CHART_COLOR.tick :
+      CHART_COLOR.line
+    );
+    ch.update('none');
+  }
+
+  setChart(charts.ph,   'ph',            'ph');
+  setChart(charts.do,   'do_level',      'do');
+  setChart(charts.suhu, 'suhu',          'suhu');
+  setChart(charts.fr,   'feeding_rate',  'feeding_rate');
+  setChart(charts.fcr,  'fcr',           'fcr');
+  setChart(charts.sr,   'survival_rate', 'survival_rate');
+}
+
+// ── Load history ──────────────────────────────────────────────────────────
+async function loadHistory() {
+  const kolam = document.getElementById('filterKolam').value;
+  const url = '/api/data?limit=50' + (kolam ? '&kolam=' + encodeURIComponent(kolam) : '');
+  try {
+    const res = await fetch(url);
+    historyData = await res.json();
+    renderTable(historyData);
+    updateCharts(historyData);
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function renderTable(entries) {
+  const body = document.getElementById('historyBody');
+  if (!entries.length) {
+    body.innerHTML = '<tr><td colspan="11"><div class="no-data-msg"><i class="fa fa-database"></i>Belum ada data untuk kolam ini</div></td></tr>';
+    return;
+  }
+  const rows = [...entries].reverse().map((e, ri) => {
+    const idx = entries.length - 1 - ri;
+    const st = e.assessment || '–';
+    const stClass = st === 'BAIK' ? 'badge-BAIK' : st === 'PERHATIAN' ? 'badge-PERHATIAN' : st === 'KRITIS' ? 'badge-KRITIS' : 'badge-NODATA';
+    const f = v => (v !== null && v !== undefined) ? v : '–';
+    return `<tr>
+      <td style="font-size:0.73rem;color:var(--text-dim);white-space:nowrap;">${e.timestamp || '–'}</td>
+      <td>${f(e.kolam)}</td>
+      <td>${f(e.jenis_ikan)}</td>
+      <td>${f(e.ph)}</td>
+      <td>${f(e.do_level)}</td>
+      <td>${f(e.suhu)}</td>
+      <td>${f(e.feeding_rate)}</td>
+      <td>${f(e.fcr)}</td>
+      <td>${f(e.survival_rate)}</td>
+      <td><span class="badge-status ${stClass}">${st}</span></td>
+      <td>
+        <button onclick="deleteEntry(${idx})" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:0.75rem;" title="Hapus">
+          <i class="fa fa-trash"></i>
+        </button>
+      </td>
+    </tr>`;
+  });
+  body.innerHTML = rows.join('');
+}
+
+async function deleteEntry(idx) {
+  if (!confirm('Hapus data ini?')) return;
+  await fetch(`/api/delete/${idx}`, { method: 'DELETE' });
+  await loadHistory();
+  showToast('Data berhasil dihapus', 'info');
+}
+
+// ── Update Status Banner & Metrics ────────────────────────────────────────
+function updateStatus(assessment, entry) {
+  const overall = assessment.overall;
+  const banner = document.getElementById('statusBanner');
+  const icon   = document.getElementById('statusIcon');
+
+  banner.className = `status-banner ${overall}`;
+  icon.className   = `status-icon ${overall}`;
+
+  const iconMap = { BAIK:'fa-circle-check', PERHATIAN:'fa-triangle-exclamation', KRITIS:'fa-circle-xmark' };
+  icon.innerHTML = `<i class="fa ${iconMap[overall]}"></i>`;
+
+  const titleMap = { BAIK:'Kondisi Baik', PERHATIAN:'Perlu Perhatian', KRITIS:'Kondisi Kritis!' };
+  const subMap = {
+    BAIK:       'Semua parameter dalam rentang optimal. Pertahankan!',
+    PERHATIAN:  `${assessment.issues.length} parameter perlu perhatian. Segera tindak lanjuti.`,
+    KRITIS:     `${assessment.issues.length} parameter KRITIS! Tangani sekarang sebelum terjadi kerugian.`,
+  };
+  document.getElementById('statusTitle').textContent = titleMap[overall];
+  document.getElementById('statusSub').textContent   = subMap[overall];
+  document.getElementById('last-update').textContent = `Update: ${entry.timestamp}`;
+
+  // Update metric cards
+  const metricMap = {
+    'metric-ph':            { val: entry.ph,            grade: assessment.grades.ph },
+    'metric-do_level':      { val: entry.do_level,      grade: assessment.grades.do },
+    'metric-suhu':          { val: entry.suhu,          grade: assessment.grades.suhu },
+    'metric-kecerahan':     { val: entry.kecerahan,     grade: assessment.grades.kecerahan },
+    'metric-feeding_rate':  { val: entry.feeding_rate,  grade: assessment.grades.feeding_rate },
+    'metric-fcr':           { val: entry.fcr,           grade: assessment.grades.fcr },
+    'metric-biomassa':      { val: entry.biomassa,      grade: null },
+    'metric-survival_rate': { val: entry.survival_rate, grade: assessment.grades.survival_rate },
+  };
+  for (const [id, {val, grade}] of Object.entries(metricMap)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (val !== null && val !== undefined) ? val : '–';
+    const card = el?.closest('.metric-card');
+    if (card && grade) {
+      card.className = `metric-card ${grade}`;
+      let badge = card.querySelector('.badge-grade');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'badge-grade';
+        card.appendChild(badge);
+      }
+      badge.className = `badge-grade badge-${grade}`;
+      badge.textContent = grade;
+    }
+  }
+}
+
+function updateIssues(issues) {
+  const el = document.getElementById('issuesList');
+  if (!issues.length) {
+    el.innerHTML = '<div class="no-data-msg"><i class="fa fa-circle-check"></i>Tidak ada masalah terdeteksi</div>';
+    return;
+  }
+  el.innerHTML = issues.map(i => `
+    <div class="issue-item">
+      <div class="issue-dot dot-${i.status}"></div>
+      <div>
+        <div class="issue-label" style="color:${i.status==='KRITIS'?'var(--coral)':'var(--amber)'}">
+          ${i.status} — ${i.label} (${i.nilai})
+        </div>
+        <div class="issue-msg">${i.pesan}</div>
+      </div>
+    </div>`).join('');
+}
+
+function updateRecs(recs) {
+  const el = document.getElementById('recList');
+  if (!recs.length) {
+    el.innerHTML = '<div class="no-data-msg"><i class="fa fa-question-circle"></i>Tidak ada rekomendasi</div>';
+    return;
+  }
+  el.innerHTML = recs.map(r => `<li>${r}</li>`).join('');
+}
+
+// ── Form Submit ────────────────────────────────────────────────────────────
+document.getElementById('dataForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Menganalisis...';
+
+  const fd = new FormData(this);
+  const payload = {};
+  fd.forEach((v, k) => { payload[k] = v || null; });
+
+  try {
+    const res = await fetch('/api/data', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      updateStatus(data.assessment, data.entry);
+      updateIssues(data.assessment.issues);
+      updateRecs(data.assessment.recommendations);
+      await loadHistory();
+
+      const colorMap = { BAIK:'#06d6a0', PERHATIAN:'#ffd166', KRITIS:'#ef476f' };
+      showToast('Data tersimpan! Status: ' + data.assessment.overall, 'success', data.assessment.overall);
+    }
+  } catch(err) {
+    showToast('Gagal menyimpan data: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-paper-plane me-2"></i>Simpan & Analisis';
+  }
+});
+
+// ── Add Kolam ─────────────────────────────────────────────────────────────
+async function addKolam() {
+  const nama = prompt('Nama kolam / bak baru:');
+  if (!nama || !nama.trim()) return;
+  const res = await fetch('/api/kolam', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ nama: nama.trim() })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    const sel1 = document.getElementById('kolam');
+    const sel2 = document.getElementById('filterKolam');
+    const opt  = `<option value="${nama.trim()}">${nama.trim()}</option>`;
+    sel1.insertAdjacentHTML('beforeend', opt);
+    sel2.insertAdjacentHTML('beforeend', opt);
+    sel1.value = nama.trim();
+    showToast('Kolam berhasil ditambahkan', 'success');
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info', status = null) {
+  const icons = { success:'fa-circle-check', error:'fa-circle-xmark', info:'fa-circle-info' };
+  const colors = { success:'var(--teal)', error:'var(--coral)', info:'var(--cyan)' };
+  const statusColors = { BAIK:'var(--teal)', PERHATIAN:'var(--amber)', KRITIS:'var(--coral)' };
+  const color = status ? (statusColors[status] || colors[type]) : colors[type];
+
+  const div = document.createElement('div');
+  div.className = 'toast-custom';
+  div.innerHTML = `<i class="fa ${icons[type] || icons.info}" style="color:${color};font-size:1.1rem;"></i> ${msg}`;
+  document.getElementById('toastContainer').appendChild(div);
+  setTimeout(() => div.remove(), 4000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+initCharts();
+loadHistory();
+</script>
+</body>
+</html>
