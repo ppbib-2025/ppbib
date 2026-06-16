@@ -7,6 +7,8 @@ Routes:
   GET  /setup                  -> halaman setup token OAuth
   GET  /setup/tiktok           -> mulai OAuth TikTok
   GET  /setup/tiktok/callback  -> callback dari TikTok OAuth
+  GET  /terms                  -> halaman syarat & ketentuan
+  GET  /privacy                -> halaman kebijakan privasi
 """
 import json
 import os
@@ -42,8 +44,6 @@ def _num(n: int) -> str:
     return f"{n:,}"
 
 
-# ── HTML helpers ─────────────────────────────────────────────────────────────
-
 BASE_CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f4;color:#222}
@@ -76,6 +76,8 @@ li{margin-bottom:3px}
 .alert-ok{background:#d1fae5;border:1px solid #6ee7b7;color:#065f46}
 .alert-err{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b}
 .alert-info{background:#e0f2fe;border:1px solid #7dd3fc;color:#075985}
+p{line-height:1.7}
+h3{margin:20px 0 8px}
 """
 
 
@@ -107,8 +109,6 @@ def _page(title: str, body: str, refresh_secs: int = 0) -> str:
 </body></html>"""
 
 
-# ── Routes ───────────────────────────────────────────────────────────────────
-
 @app.route("/")
 def home():
     body = """
@@ -126,7 +126,6 @@ def home():
 def analytics():
     is_refreshing = os.path.exists(REFRESH_FLAG)
 
-    # ── TikTok
     tiktok_rows = []
     for vid_id, d in _load(TIKTOK_FILE).items():
         snaps = d.get("snapshots", [])
@@ -140,15 +139,11 @@ def analytics():
         er = round((likes + comments + shares) / max(views, 1) * 100, 2)
         tiktok_rows.append({
             "title":    (d.get("title") or d.get("description", ""))[:65] or "(tanpa judul)",
-            "views":    views,
-            "likes":    likes,
-            "comments": comments,
-            "shares":   shares,
-            "er":       er,
+            "views":    views, "likes": likes, "comments": comments,
+            "shares":   shares, "er": er,
         })
     tiktok_rows.sort(key=lambda x: x["er"], reverse=True)
 
-    # ── Instagram
     ig_rows = []
     for pid, d in _load(IG_FILE).items():
         snaps = d.get("snapshots", [])
@@ -162,14 +157,10 @@ def analytics():
         ig_rows.append({
             "caption":     (d.get("caption", ""))[:65] or "(tanpa caption)",
             "media_type":  d.get("media_type", "IMAGE"),
-            "likes":       likes,
-            "comments":    comments,
-            "impressions": impr,
-            "er":          er,
+            "likes": likes, "comments": comments, "impressions": impr, "er": er,
         })
     ig_rows.sort(key=lambda x: x["er"], reverse=True)
 
-    # ── Facebook
     fb_rows = []
     for pid, d in _load(FB_FILE).items():
         snaps = d.get("snapshots", [])
@@ -182,16 +173,12 @@ def analytics():
         impr     = s.get("impressions", 0)
         er = round((likes + comments + shares) / max(impr, 1) * 100, 2)
         fb_rows.append({
-            "message":     (d.get("message", ""))[:65] or "(tanpa pesan)",
-            "likes":       likes,
-            "comments":    comments,
-            "shares":      shares,
-            "impressions": impr,
-            "er":          er,
+            "message": (d.get("message", ""))[:65] or "(tanpa pesan)",
+            "likes": likes, "comments": comments, "shares": shares,
+            "impressions": impr, "er": er,
         })
     fb_rows.sort(key=lambda x: x["er"], reverse=True)
 
-    # ── Auto Research
     strategy = _load(STRATEGY_FILE)
 
     def _table_tiktok(rows):
@@ -245,7 +232,6 @@ def analytics():
     body += f'<div class="card"><h2 style="color:#C13584">&#128247; Instagram</h2>{_table_ig(ig_rows)}</div>'
     body += f'<div class="card"><h2 style="color:#1877F2">&#128216; Facebook</h2>{_table_fb(fb_rows)}</div>'
 
-    # Auto Research card
     body += '<div class="card"><h2>&#128300; Auto Research'
     if strategy:
         iteration = strategy.get("iteration", "-")
@@ -276,7 +262,6 @@ def analytics():
 def analytics_refresh():
     if os.path.exists(REFRESH_FLAG):
         return redirect("/analytics")
-
     os.makedirs("data", exist_ok=True)
     open(REFRESH_FLAG, "w").close()
 
@@ -307,8 +292,6 @@ def analytics_refresh():
     return redirect("/analytics")
 
 
-# ── Setup OAuth ───────────────────────────────────────────────────────────────
-
 @app.route("/setup")
 def setup():
     from src.tiktok_auth import load_token as tiktok_load
@@ -316,11 +299,11 @@ def setup():
     tk_status = '&#9989; Token aktif' if tk_ok else '&#10060; Belum ada token'
     tk_btn_label = 'Perbarui Token TikTok' if tk_ok else 'Hubungkan TikTok'
 
-    tiktok_key = os.getenv("TIKTOK_CLIENT_KEY", "")
+    tiktok_key    = os.getenv("TIKTOK_CLIENT_KEY", "")
     tiktok_secret = os.getenv("TIKTOK_CLIENT_SECRET", "")
-    tiktok_redirect = os.getenv("TIKTOK_REDIRECT_URI", "")
+    tiktok_redir  = os.getenv("TIKTOK_REDIRECT_URI", "")
 
-    if not tiktok_key or not tiktok_secret or not tiktok_redirect:
+    if not tiktok_key or not tiktok_secret or not tiktok_redir:
         env_warn = '<div class="alert alert-err">&#9888; Env vars TikTok belum diset di Railway: <code>TIKTOK_CLIENT_KEY</code>, <code>TIKTOK_CLIENT_SECRET</code>, <code>TIKTOK_REDIRECT_URI</code></div>'
     else:
         env_warn = '<div class="alert alert-ok">&#9989; Env vars TikTok sudah diset.</div>'
@@ -328,22 +311,16 @@ def setup():
     body = f"""
     <div class="card">
       <h2>&#128273; Setup Token OAuth</h2>
-      <p style="font-size:13px;color:#555;margin-bottom:20px">
-        Hubungkan akun media sosial untuk mengambil data analytics.
-      </p>
+      <p style="font-size:13px;color:#555;margin-bottom:20px">Hubungkan akun media sosial untuk mengambil data analytics.</p>
 
       <h3 style="font-size:13px;font-weight:700;margin-bottom:10px">&#127916; TikTok</h3>
       {env_warn}
       <p style="font-size:13px;margin-bottom:12px">Status: {tk_status}</p>
       <a href="/setup/tiktok" class="btn btn-tiktok">&#9654; {tk_btn_label}</a>
     </div>
-
     <div class="card">
       <h2>&#128247; Instagram / Facebook</h2>
-      <p style="font-size:13px;color:#555">
-        Setup Instagram dan Facebook menggunakan Facebook OAuth.
-        Panduan akan ditambahkan di langkah berikutnya.
-      </p>
+      <p style="font-size:13px;color:#555">Setup Instagram dan Facebook menggunakan Facebook OAuth. Panduan akan ditambahkan di langkah berikutnya.</p>
     </div>
     """
     return _page("Setup Token", body)
@@ -356,14 +333,14 @@ def setup_tiktok():
         url = get_auth_url()
         return redirect(url)
     except Exception as e:
-        body = f'<div class="card"><div class="alert alert-err">Error membuat URL: {e}<br><br>Pastikan env vars <code>TIKTOK_CLIENT_KEY</code>, <code>TIKTOK_CLIENT_SECRET</code>, dan <code>TIKTOK_REDIRECT_URI</code> sudah diset di Railway.</div></div>'
+        body = f'<div class="card"><div class="alert alert-err">Error: {e}<br><br>Pastikan env vars <code>TIKTOK_CLIENT_KEY</code>, <code>TIKTOK_CLIENT_SECRET</code>, dan <code>TIKTOK_REDIRECT_URI</code> sudah diset di Railway.</div></div>'
         return _page("TikTok OAuth Error", body)
 
 
 @app.route("/setup/tiktok/callback")
 def setup_tiktok_callback():
-    code  = request.args.get("code", "")
-    error = request.args.get("error", "")
+    code       = request.args.get("code", "")
+    error      = request.args.get("error", "")
     error_desc = request.args.get("error_description", "")
 
     if error:
@@ -381,7 +358,7 @@ def setup_tiktok_callback():
         body = """
         <div class="card">
           <div class="alert alert-ok">&#9989; Token TikTok berhasil disimpan!</div>
-          <p style="font-size:13px;margin-top:12px">Sekarang kamu bisa klik <strong>Refresh</strong> di dashboard untuk mengambil data video TikTok.</p>
+          <p style="font-size:13px;margin-top:12px">Sekarang kamu bisa klik <strong>Refresh</strong> untuk mengambil data video TikTok.</p>
           <p style="margin-top:16px">
             <a href="/analytics" class="btn btn-primary" style="margin-right:8px">Ke Analytics</a>
             <a href="/analytics/refresh" class="btn btn-refresh">Refresh Data Sekarang</a>
@@ -393,3 +370,61 @@ def setup_tiktok_callback():
         err_msg = json.dumps(result, indent=2)
         body = f'<div class="card"><div class="alert alert-err"><strong>Gagal tukar token:</strong><br><pre style="font-size:11px;margin-top:8px;overflow:auto">{err_msg}</pre></div><p style="margin-top:12px"><a href="/setup">Coba lagi</a></p></div>'
         return _page("TikTok OAuth Gagal", body)
+
+
+@app.route("/terms")
+def terms():
+    body = """
+    <div class="card" style="max-width:780px">
+      <h2>Syarat &amp; Ketentuan Penggunaan</h2>
+      <p class="meta">Terakhir diperbarui: Juni 2026</p>
+
+      <h3>1. Tentang Layanan</h3>
+      <p>PPBIB Analytics adalah platform internal untuk mengelola dan menganalisis performa konten media sosial milik PPBIB (Persatuan Pedagang Batik Indonesia Bangkalan). Layanan ini hanya digunakan oleh tim internal PPBIB.</p>
+
+      <h3>2. Penggunaan Data</h3>
+      <p>Platform ini mengakses data performa konten (views, likes, komentar, share) dari akun TikTok, Instagram, dan Facebook resmi PPBIB untuk keperluan analisis internal. Data tidak dibagikan kepada pihak ketiga.</p>
+
+      <h3>3. Akses dan Izin</h3>
+      <p>Akses ke platform ini terbatas hanya untuk anggota tim resmi PPBIB. Pengguna bertanggung jawab untuk menjaga kerahasiaan kredensial akses mereka.</p>
+
+      <h3>4. Batasan Tanggung Jawab</h3>
+      <p>PPBIB tidak bertanggung jawab atas gangguan layanan yang disebabkan oleh pihak ketiga (TikTok, Instagram, Facebook, atau layanan hosting). Data analytics disediakan sebagai referensi dan mungkin mengalami keterlambatan.</p>
+
+      <h3>5. Perubahan Ketentuan</h3>
+      <p>Kami dapat memperbarui syarat ini sewaktu-waktu. Penggunaan berkelanjutan atas layanan merupakan persetujuan terhadap perubahan tersebut.</p>
+
+      <h3>6. Kontak</h3>
+      <p>Untuk pertanyaan, hubungi tim PPBIB melalui saluran internal.</p>
+    </div>
+    """
+    return _page("Syarat & Ketentuan", body)
+
+
+@app.route("/privacy")
+def privacy():
+    body = """
+    <div class="card" style="max-width:780px">
+      <h2>Kebijakan Privasi</h2>
+      <p class="meta">Terakhir diperbarui: Juni 2026</p>
+
+      <h3>1. Data yang Dikumpulkan</h3>
+      <p>Platform PPBIB Analytics mengumpulkan data performa konten publik dari akun media sosial resmi PPBIB, meliputi: jumlah tayangan, suka, komentar, dan berbagi. Kami tidak mengumpulkan data pribadi pengguna TikTok.</p>
+
+      <h3>2. Penggunaan Data</h3>
+      <p>Data yang dikumpulkan digunakan semata-mata untuk keperluan analisis performa konten internal PPBIB guna meningkatkan strategi konten media sosial.</p>
+
+      <h3>3. Penyimpanan Data</h3>
+      <p>Data disimpan secara aman di server internal dan hanya dapat diakses oleh tim resmi PPBIB. Token OAuth disimpan secara terenkripsi dan tidak dibagikan kepada pihak manapun.</p>
+
+      <h3>4. Berbagi Data</h3>
+      <p>Kami tidak menjual, memperdagangkan, atau mentransfer data kepada pihak ketiga. Data hanya digunakan untuk keperluan operasional internal PPBIB.</p>
+
+      <h3>5. Hak Pengguna</h3>
+      <p>Pengguna dapat mencabut akses OAuth kapan saja melalui pengaturan akun TikTok/Instagram/Facebook mereka. Pencabutan akses akan menghentikan pengumpulan data baru.</p>
+
+      <h3>6. Kontak</h3>
+      <p>Untuk pertanyaan terkait privasi, hubungi tim PPBIB melalui saluran internal.</p>
+    </div>
+    """
+    return _page("Kebijakan Privasi", body)
