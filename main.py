@@ -1,7 +1,9 @@
 """
 Entry point: jalankan dengan `python main.py`
+Flask dashboard jalan di thread terpisah; scheduler jalan di main thread.
 """
 import os
+import threading
 from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler
 
@@ -24,11 +26,12 @@ from src.content_generator import (
 from src.auto_research import run_weekly_evaluation
 from src.video_producer import produce_todays_video, format_video_ready_wa
 from src.whatsapp import send_whatsapp, is_wa_connected
+from src.dashboard import app as flask_app
 
-WA_NUMBER = os.getenv("WHATSAPP_NUMBER", "")
+WA_NUMBER       = os.getenv("WHATSAPP_NUMBER", "")
 REPORT_WA_NUMBER = os.getenv("REPORT_WA_NUMBER", WA_NUMBER)
-VIDEO_ENABLED = bool(os.getenv("FAL_KEY"))
-TIKTOK_ENABLED = bool(load_token())
+VIDEO_ENABLED   = bool(os.getenv("FAL_KEY"))
+TIKTOK_ENABLED  = bool(load_token())
 
 
 def _send_wa(msg: str, label: str):
@@ -39,7 +42,8 @@ def _send_wa(msg: str, label: str):
         print(f"[WA] Skip {label} (WA tidak terhubung).")
 
 
-# ── Bot TikTok ────────────────────────────────────────────\n
+# ── Bot TikTok ────────────────────────────────────────────
+
 def job_scan():
     if not TIKTOK_ENABLED:
         return
@@ -54,7 +58,8 @@ def job_followup():
     run_followups(WA_NUMBER)
 
 
-# ── Analytics ───────────────────────────────────────────\n
+# ── Analytics ───────────────────────────────────────────
+
 def job_collect_analytics():
     print("[Analytics] Snapshot harian...")
     if TIKTOK_ENABLED:
@@ -75,7 +80,8 @@ def job_weekly_report():
     _send_wa(report, "Laporan mingguan")
 
 
-# ── Auto Research ─────────────────────────────────────────\n
+# ── Auto Research ─────────────────────────────────────────
+
 def job_auto_research():
     """Sabtu 17:00 — evaluasi performa minggu ini, update strategi untuk minggu depan."""
     print("[AutoResearch] Evaluasi performa konten minggu ini...")
@@ -97,7 +103,8 @@ def job_auto_research():
         _send_wa(f"⚠️ Auto research gagal: {e}", "Error auto research")
 
 
-# ── Content Generator ────────────────────────────────────────\n
+# ── Content Generator ────────────────────────────────────────
+
 def job_generate_content():
     print("[Content] Membuat rencana konten minggu depan...")
     try:
@@ -120,7 +127,8 @@ def job_daily_content_reminder():
         print("[Content] Tidak ada konten terjadwal hari ini.")
 
 
-# ── Video Producer ────────────────────────────────────────────\n
+# ── Video Producer ────────────────────────────────────────────
+
 def job_produce_video():
     if not VIDEO_ENABLED:
         return
@@ -136,7 +144,8 @@ def job_produce_video():
         _send_wa(f"⚠️ Seedance error: {e}", "Error video producer")
 
 
-# ── Main ────────────────────────────────────────────────\n
+# ── Main ────────────────────────────────────────────────
+
 if __name__ == "__main__":
     print("=" * 50)
     print("PPBIB Bot mulai...")
@@ -150,6 +159,16 @@ if __name__ == "__main__":
         print("[INFO] Untuk setup TikTok nanti, buka URL ini di browser:")
         print(get_auth_url())
         print()
+
+    # Jalankan Flask di background thread
+    port = int(os.getenv("PORT", 8080))
+    flask_thread = threading.Thread(
+        target=lambda: flask_app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False),
+        daemon=True,
+        name="flask-dashboard",
+    )
+    flask_thread.start()
+    print(f"[Dashboard] Analytics tersedia di http://localhost:{port}/analytics")
 
     scheduler = BlockingScheduler()
 
@@ -169,7 +188,7 @@ if __name__ == "__main__":
     print("  - Laporan harian WA   : tiap hari 20:00")
     print("  - Laporan mingguan    : Senin 07:00")
     print("  - Reminder konten     : tiap hari 07:00")
-    print("  - Auto research       : Sabtu 17:00  ← BARU")
+    print("  - Auto research       : Sabtu 17:00")
     print("  - Generate konten     : Minggu 18:00")
     if TIKTOK_ENABLED:
         print("  - Scan komentar TikTok: tiap 15 menit")
