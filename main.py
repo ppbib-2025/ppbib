@@ -21,6 +21,7 @@ from src.content_generator import (
     get_todays_content,
     format_today_for_whatsapp,
 )
+from src.auto_research import run_weekly_evaluation
 from src.video_producer import produce_todays_video, format_video_ready_wa
 from src.whatsapp import send_whatsapp, is_wa_connected
 
@@ -38,8 +39,7 @@ def _send_wa(msg: str, label: str):
         print(f"[WA] Skip {label} (WA tidak terhubung).")
 
 
-# ── Bot TikTok ────────────────────────────────────────────────────────────────
-
+# ── Bot TikTok ────────────────────────────────────────────\n
 def job_scan():
     if not TIKTOK_ENABLED:
         return
@@ -54,8 +54,7 @@ def job_followup():
     run_followups(WA_NUMBER)
 
 
-# ── Analytics ───────────────────────────────────────────────────────────────
-
+# ── Analytics ───────────────────────────────────────────\n
 def job_collect_analytics():
     print("[Analytics] Snapshot harian...")
     if TIKTOK_ENABLED:
@@ -76,8 +75,29 @@ def job_weekly_report():
     _send_wa(report, "Laporan mingguan")
 
 
-# ── Content Generator ─────────────────────────────────────────────────────
+# ── Auto Research ─────────────────────────────────────────\n
+def job_auto_research():
+    """Sabtu 17:00 — evaluasi performa minggu ini, update strategi untuk minggu depan."""
+    print("[AutoResearch] Evaluasi performa konten minggu ini...")
+    try:
+        insights = run_weekly_evaluation()
+        iteration = insights.get("iteration", "?")
+        wa_summary = insights.get("wa_summary", "Auto research selesai.")
+        patterns = insights.get("top_performing_patterns", {})
+        winning = ", ".join(patterns.get("winning_topics", [])[:2])
+        msg = (
+            f"\U0001f52c *Auto Research PPBIB — Iterasi #{iteration}*\n\n"
+            f"{wa_summary}\n\n"
+            f"\U0001f3af Topik pemenang: {winning or '-'}\n"
+            f"_Strategi konten minggu depan sudah diperbarui._"
+        )
+        _send_wa(msg, "Auto research insights")
+    except Exception as e:
+        print(f"[AutoResearch] ERROR: {e}")
+        _send_wa(f"⚠️ Auto research gagal: {e}", "Error auto research")
 
+
+# ── Content Generator ────────────────────────────────────────\n
 def job_generate_content():
     print("[Content] Membuat rencana konten minggu depan...")
     try:
@@ -100,8 +120,7 @@ def job_daily_content_reminder():
         print("[Content] Tidak ada konten terjadwal hari ini.")
 
 
-# ── Video Producer ───────────────────────────────────────────────────────────
-
+# ── Video Producer ────────────────────────────────────────────\n
 def job_produce_video():
     if not VIDEO_ENABLED:
         return
@@ -117,8 +136,7 @@ def job_produce_video():
         _send_wa(f"⚠️ Seedance error: {e}", "Error video producer")
 
 
-# ── Main ────────────────────────────────────────────────────────────────────
-
+# ── Main ────────────────────────────────────────────────\n
 if __name__ == "__main__":
     print("=" * 50)
     print("PPBIB Bot mulai...")
@@ -138,23 +156,25 @@ if __name__ == "__main__":
     scheduler.add_job(job_scan,     "interval", minutes=15, id="scan")
     scheduler.add_job(job_followup, "interval", hours=6,    id="followup")
 
-    scheduler.add_job(job_collect_analytics,      "cron", hour=19, minute=0,                   id="analytics_collect")
-    scheduler.add_job(job_daily_report,           "cron", hour=20, minute=0,                   id="analytics_daily")
-    scheduler.add_job(job_weekly_report,          "cron", day_of_week="mon", hour=7, minute=0, id="analytics_weekly")
-    scheduler.add_job(job_daily_content_reminder, "cron", hour=7,  minute=0,                   id="content_reminder")
+    scheduler.add_job(job_collect_analytics,      "cron", hour=19, minute=0,                    id="analytics_collect")
+    scheduler.add_job(job_daily_report,           "cron", hour=20, minute=0,                    id="analytics_daily")
+    scheduler.add_job(job_weekly_report,          "cron", day_of_week="mon", hour=7,  minute=0, id="analytics_weekly")
+    scheduler.add_job(job_daily_content_reminder, "cron", hour=7,  minute=0,                    id="content_reminder")
+    scheduler.add_job(job_auto_research,          "cron", day_of_week="sat", hour=17, minute=0, id="auto_research")
     scheduler.add_job(job_generate_content,       "cron", day_of_week="sun", hour=18, minute=0, id="content_generate")
-    scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                   id="video_produce")
+    scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                    id="video_produce")
 
     print("Scheduler aktif:")
-    print("  - Snapshot metrics  : tiap hari 19:00")
-    print("  - Laporan harian WA : tiap hari 20:00")
-    print("  - Laporan mingguan  : Senin 07:00")
-    print("  - Reminder konten   : tiap hari 07:00")
-    print("  - Generate konten   : Minggu 18:00")
+    print("  - Snapshot metrics    : tiap hari 19:00")
+    print("  - Laporan harian WA   : tiap hari 20:00")
+    print("  - Laporan mingguan    : Senin 07:00")
+    print("  - Reminder konten     : tiap hari 07:00")
+    print("  - Auto research       : Sabtu 17:00  ← BARU")
+    print("  - Generate konten     : Minggu 18:00")
     if TIKTOK_ENABLED:
-        print("  - Scan komentar TikTok : tiap 15 menit")
+        print("  - Scan komentar TikTok: tiap 15 menit")
     if VIDEO_ENABLED:
-        print("  - Produksi video : tiap hari 08:00")
+        print("  - Produksi video      : tiap hari 08:00")
     print()
     print("Bot berjalan... (Ctrl+C untuk berhenti)")
     scheduler.start()

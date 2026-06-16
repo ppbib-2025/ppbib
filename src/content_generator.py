@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from anthropic import Anthropic
 from src.analytics import get_top_content
+from src.auto_research import load_strategy_insights
 
 client = Anthropic()
 
@@ -45,15 +46,27 @@ def generate_weekly_plan() -> dict:
     """
     Generate rencana konten 1 minggu berdasarkan insight performa.
     Return dict lengkap: 7 video scripts, 2 carousel, 2 foto.
+    Menyertakan strategi dari auto research jika tersedia.
     """
     top_summary = _top_content_summary()
+    strategy = load_strategy_insights()
+    strategy_prompt = strategy.get("strategy_prompt", "")
+    strategy_iteration = strategy.get("iteration", 0)
+
+    strategy_block = (
+        f"STRATEGI AUTO RESEARCH (iterasi #{strategy_iteration}):\n{strategy_prompt}"
+        if strategy_prompt
+        else "STRATEGI AUTO RESEARCH: Belum ada data. Gunakan pendekatan umum."
+    )
 
     prompt = f"""{BRAND_CONTEXT}
 
-DATA KONTEN TERBAIK PPBIB (engagement rate tertinggi minggu ini):
+DATA KONTEN TERBAIK PPBIB (engagement rate tertinggi):
 {top_summary}
 
-Berdasarkan pola konten yang perform di atas, buat rencana konten organik 1 minggu
+{strategy_block}
+
+Berdasarkan pola konten yang perform dan strategi di atas, buat rencana konten organik 1 minggu
 untuk TikTok, Instagram, dan Facebook.
 
 Return HANYA JSON valid, tidak ada teks lain sebelum atau sesudah JSON:
@@ -61,6 +74,7 @@ Return HANYA JSON valid, tidak ada teks lain sebelum atau sesudah JSON:
 {{
   "week_theme": "tema utama minggu ini dalam 1 kalimat",
   "insight_note": "analisis singkat: pola apa dari konten terbaik yang kita replikasi minggu ini",
+  "strategy_iteration": {strategy_iteration},
   "videos": [
     {{
       "day": "Senin",
@@ -134,9 +148,11 @@ def _append_queue(plan: dict):
 
 def format_plan_for_whatsapp(plan: dict) -> str:
     """Ringkasan rencana konten untuk WA. Detail lengkap ada di JSON."""
+    iteration = plan.get("strategy_iteration", 0)
+    iter_note = f" _(strategi iterasi #{iteration})_" if iteration else ""
     lines = [
         "\U0001f3ac *RENCANA KONTEN PPBIB MINGGU INI*",
-        f"\U0001f4c5 Pekan {plan.get('week_of', '')}",
+        f"\U0001f4c5 Pekan {plan.get('week_of', '')}{iter_note}",
         f"\U0001f3af Tema: *{plan.get('week_theme', '')}*",
         f"\U0001f4a1 {plan.get('insight_note', '')}",
         "─" * 30, "",
