@@ -1,6 +1,7 @@
 .env
 *.token
 data/tokens/
+data/portfolio_sim.json
 __pycache__/
 *.pyc
 .venv/
