@@ -1,7 +1,6 @@
-
 KEMENTERIAN KELAUTAN DAN PERIKANAN
 DIREKTORAT JENDERAL PERIKANAN BUDIDAYA
-BALAI PENGEMBANGAN DAN PEMBENIHAN IKAN BUDIDAYA CIJERUK
+BALAI RISET PERIKANAN BUDIDAYA AIR TAWAR DAN PENYULUHAN PERIKANAN
 INSTALASI PLASMA NUTFAH PERIKANAN AIR TAWAR CIJERUK
 Jl. Raya Cijeruk, Cijeruk, Bogor, Jawa Barat
 
@@ -65,12 +64,14 @@ KETENTUAN UMUM
 
 Dalam Surat Keputusan ini yang dimaksud dengan:
 
-1. Instalasi adalah Instalasi Plasma Nutfah Perikanan Air Tawar Cijeruk.
+1. Instalasi adalah Instalasi Plasma Nutfah Perikanan Air Tawar Cijeruk
+   di bawah Balai Riset Perikanan Budidaya Air Tawar dan Penyuluhan
+   Perikanan.
 2. Blok Belakang adalah area atau zona kerja bagian belakang Instalasi yang
    meliputi unit pemeliharaan ikan hias, unit pembesaran ikan nila, unit
    bioflok, dan unit produksi pakan alami.
-3. Supervisor adalah petugas yang bertanggung jawab mengawasi dan mengoordinasikan
-   seluruh kegiatan teknis di Blok Belakang.
+3. Supervisor adalah petugas yang bertanggung jawab mengawasi dan
+   mengoordinasikan seluruh kegiatan teknis di Blok Belakang.
 4. Teknisi adalah petugas teknis yang bertanggung jawab langsung atas unit
    kerja tertentu di Blok Belakang.
 
@@ -83,7 +84,7 @@ Menetapkan nama-nama berikut sebagai petugas yang bertanggung jawab dalam
 sistem kerja di Blok Belakang Instalasi Plasma Nutfah Perikanan Air Tawar
 Cijeruk:
 
-  No. | Nama                  | Jabatan
+  No. | Nama                  | Jabatan/Peran
   ----|-----------------------|------------------------------------
   1.  | Firmansyah, A.Md      | Supervisor Blok Belakang
   2.  | Heri Arif R, A.Md     | Teknisi Ikan Hias
@@ -95,100 +96,393 @@ Cijeruk:
 PASAL 3
 TUGAS DAN TANGGUNG JAWAB
 
+================================================================================
 A. SUPERVISOR BLOK BELAKANG
-   (Firmansyah, A.Md)
+   Firmansyah, A.Md
+================================================================================
 
-   1. Mengkoordinasikan dan mengawasi seluruh kegiatan teknis di Blok
-      Belakang, meliputi pemeliharaan ikan hias, ikan nila, sistem bioflok,
-      dan produksi pakan alami;
-   2. Menyusun rencana kerja harian, mingguan, dan bulanan kegiatan di
-      Blok Belakang;
-   3. Memastikan setiap teknisi melaksanakan tugas sesuai dengan prosedur
-      operasional standar (SOP) yang telah ditetapkan;
-   4. Melakukan evaluasi dan monitoring terhadap perkembangan setiap unit
-      kerja di Blok Belakang secara berkala;
-   5. Menyusun dan menyampaikan laporan bulanan kegiatan Blok Belakang
-      kepada Kepala Instalasi;
-   6. Bertanggung jawab atas ketersediaan sarana, prasarana, dan bahan
-      pendukung kegiatan di Blok Belakang;
-   7. Mengidentifikasi permasalahan teknis dan memberikan solusi atau
-      eskalasi permasalahan kepada Kepala Instalasi apabila diperlukan;
-   8. Memastikan penerapan biosafety dan biosecurity di seluruh area
-      Blok Belakang;
-   9. Mendokumentasikan seluruh kegiatan dan data teknis di Blok Belakang.
+TUGAS POKOK:
 
---------------------------------------------------------------------------------
+1. PERENCANAAN DAN KOORDINASI
+   a. Menyusun rencana kerja harian, mingguan, dan bulanan untuk seluruh
+      kegiatan di Blok Belakang berdasarkan program kerja Instalasi;
+   b. Mengkoordinasikan pembagian tugas harian kepada setiap teknisi sesuai
+      prioritas kegiatan;
+   c. Mengadakan pertemuan koordinasi rutin minimal satu kali per minggu
+      bersama seluruh teknisi di Blok Belakang untuk mengevaluasi capaian
+      dan menyusun rencana kerja berikutnya;
+   d. Mengoordinasikan kebutuhan sarana, bahan, dan peralatan antar unit
+      kerja di Blok Belakang.
 
+2. PENGAWASAN OPERASIONAL
+   a. Melakukan pengawasan langsung terhadap pelaksanaan kegiatan
+      pemeliharaan ikan hias, ikan nila, sistem bioflok, dan produksi
+      pakan alami setiap hari kerja;
+   b. Memastikan seluruh teknisi melaksanakan tugas sesuai Prosedur
+      Operasional Standar (SOP) yang telah ditetapkan;
+   c. Memantau kondisi seluruh unit pemeliharaan ikan dan fasilitas
+      pendukung di Blok Belakang secara berkala;
+   d. Memastikan parameter kualitas air pada seluruh unit pemeliharaan
+      dipantau dan dicatat secara rutin oleh teknisi masing-masing;
+   e. Mengawasi pelaksanaan biosafety dan biosecurity di seluruh area
+      Blok Belakang, termasuk prosedur karantina ikan baru dan
+      pengendalian akses pihak luar.
+
+3. PENGELOLAAN DATA DAN PELAPORAN
+   a. Mengompilasi dan merekapitulasi seluruh data teknis harian dari
+      masing-masing teknisi (data kualitas air, pakan, pertumbuhan,
+      mortalitas, produksi pakan alami);
+   b. Menyusun laporan bulanan kegiatan Blok Belakang secara komprehensif
+      dan menyampaikannya kepada Kepala Instalasi paling lambat tanggal 5
+      bulan berikutnya;
+   c. Mendokumentasikan seluruh kegiatan penting, kejadian luar biasa,
+      dan tindakan penanganan yang dilakukan di Blok Belakang;
+   d. Memastikan buku catatan harian (log book) setiap unit kerja diisi
+      dengan lengkap, akurat, dan tepat waktu oleh teknisi.
+
+4. PENGELOLAAN SARANA DAN PRASARANA
+   a. Memantau kondisi dan fungsi seluruh sarana prasarana di Blok Belakang
+      meliputi kolam, bak, pompa, aerasi, instalasi listrik, dan peralatan
+      teknis lainnya;
+   b. Mengajukan permintaan perbaikan atau penggantian sarana prasarana
+      yang rusak kepada Kepala Instalasi secara tertulis;
+   c. Memastikan ketersediaan stok bahan pendukung kegiatan (pakan buatan,
+      bahan kimia untuk uji kualitas air, bahan disinfektan, dll.) dan
+      mengajukan pengadaan apabila stok menipis;
+   d. Melakukan inventarisasi peralatan dan sarana Blok Belakang secara
+      berkala minimal setiap tiga bulan.
+
+5. PENANGANAN PERMASALAHAN
+   a. Mengidentifikasi permasalahan teknis yang terjadi di Blok Belakang
+      dan memberikan solusi penanganan sesuai kapasitas;
+   b. Melaporkan permasalahan yang membutuhkan penanganan lebih lanjut
+      kepada Kepala Instalasi disertai dengan data dan usulan penyelesaian;
+   c. Mengoordinasikan penanganan kasus kematian massal ikan, wabah
+      penyakit, atau kondisi darurat lainnya secara cepat dan terstruktur;
+   d. Memastikan setiap kejadian luar biasa didokumentasikan lengkap beserta
+      kronologi, tindakan yang diambil, dan hasilnya.
+
+6. PENGEMBANGAN KAPASITAS
+   a. Memberikan bimbingan dan arahan teknis kepada teknisi dalam
+      pelaksanaan tugas sehari-hari;
+   b. Mengidentifikasi kebutuhan pelatihan atau peningkatan kompetensi
+      teknisi dan melaporkannya kepada Kepala Instalasi;
+   c. Memfasilitasi transfer pengetahuan dan pengalaman antar teknisi
+      di Blok Belakang.
+
+================================================================================
 B. TEKNISI IKAN HIAS
-   (Heri Arif R, A.Md)
+   Heri Arif R, A.Md
+================================================================================
 
-   1. Melaksanakan pemeliharaan dan perawatan harian seluruh jenis ikan
-      hias yang ada di unit ikan hias Blok Belakang;
-   2. Melaksanakan kegiatan pemijahan dan pembenihan ikan hias sesuai
-      jadwal yang telah ditetapkan;
-   3. Memantau dan menjaga kualitas air (pH, suhu, oksigen terlarut,
-      amoniak, dan parameter lainnya) pada kolam/akuarium ikan hias secara
-      rutin;
-   4. Melaksanakan pemberian pakan ikan hias sesuai dosis dan frekuensi
-      yang telah ditentukan;
-   5. Melakukan pencatatan dan perekaman data pertumbuhan, kelangsungan
-      hidup, dan perkembangan ikan hias;
-   6. Mendeteksi secara dini gejala penyakit pada ikan hias dan melakukan
-      tindakan penanganan awal;
-   7. Menjaga kebersihan dan kerapian unit ikan hias, termasuk peralatan
-      dan sarana pendukung;
-   8. Membantu persiapan distribusi atau pengiriman ikan hias apabila
-      diperlukan;
-   9. Melaporkan perkembangan dan permasalahan unit ikan hias kepada
-      Supervisor secara berkala.
+TUGAS POKOK:
 
---------------------------------------------------------------------------------
+1. PEMELIHARAAN HARIAN IKAN HIAS
+   a. Melaksanakan pemberian pakan ikan hias minimal dua kali sehari
+      (pagi dan sore) sesuai dosis dan jenis pakan yang ditetapkan untuk
+      masing-masing spesies;
+   b. Melakukan pengamatan visual kondisi ikan hias setiap pagi sebelum
+      pemberian pakan pertama untuk mendeteksi gejala awal penyakit,
+      stres, atau kematian;
+   c. Memungut dan mencatat ikan yang mati setiap pagi, serta melaporkan
+      jumlah dan dugaan penyebab kematian kepada Supervisor;
+   d. Melakukan pergantian air secara rutin sesuai jadwal dan prosedur
+      yang ditetapkan untuk masing-masing jenis wadah pemeliharaan
+      (akuarium, bak fiber, kolam kecil);
+   e. Membersihkan sisa pakan dan kotoran di dasar wadah pemeliharaan
+      menggunakan selang siphon atau metode lain yang sesuai;
+   f. Menjaga dan memastikan aerasi pada setiap wadah pemeliharaan
+      berfungsi dengan baik; mengganti batu aerasi atau memperbaiki
+      selang aerasi yang rusak.
 
+2. MONITORING KUALITAS AIR
+   a. Mengukur dan mencatat parameter kualitas air pada unit ikan hias
+      setiap hari minimal satu kali, meliputi: suhu, pH, dan oksigen
+      terlarut (DO);
+   b. Mengukur parameter amoniak (TAN), nitrit (NO2), dan nitrat (NO3)
+      minimal satu kali per minggu atau segera apabila terdapat indikasi
+      penurunan kualitas air;
+   c. Melakukan tindakan korektif segera apabila terdapat parameter yang
+      keluar dari rentang optimal, antara lain dengan penggantian air
+      parsial, penambahan aerasi, atau pemberian dechlorinator;
+   d. Mencatat seluruh hasil pengukuran kualitas air dalam log book
+      unit ikan hias secara lengkap dan sistematis.
+
+3. PEMIJAHAN DAN PEMBENIHAN IKAN HIAS
+   a. Mempersiapkan induk ikan hias yang akan dipijahkan, meliputi
+      seleksi induk matang gonad, penimbangan, dan penandaan (tagging)
+      apabila diperlukan;
+   b. Menyiapkan wadah pemijahan beserta substrat atau media pemijahan
+      yang sesuai dengan jenis ikan yang akan dipijahkan;
+   c. Melaksanakan proses pemijahan sesuai SOP untuk masing-masing
+      spesies ikan hias, baik secara alami maupun semi-buatan;
+   d. Memantau proses pemijahan dan penetasan telur, serta mencatat
+      data derajat pembuahan (FR) dan derajat penetasan (HR);
+   e. Melaksanakan perawatan larva ikan hias mulai dari stadia larva
+      hingga benih siap tebar, termasuk pemberian pakan larva (pakan
+      alami maupun pakan buatan starter);
+   f. Melakukan grading atau pemisahan ukuran benih ikan hias secara
+      berkala untuk mencegah kanibalisme dan meningkatkan keseragaman
+      ukuran;
+   g. Mencatat seluruh data kegiatan pemijahan dan pembenihan dalam
+      formulir yang telah ditetapkan.
+
+4. PENGELOLAAN INDUK IKAN HIAS
+   a. Memelihara dan merawat induk ikan hias agar tetap dalam kondisi
+      prima dan siap pijah, termasuk pemberian pakan bergizi tinggi
+      sesuai kebutuhan reproduksi;
+   b. Melakukan pencatatan riwayat pemijahan setiap induk (tanggal pijah,
+      jumlah telur, FR, HR) sebagai data manajemen induk;
+   c. Melakukan seleksi dan peremajaan induk secara berkala berdasarkan
+      performa reproduksi dan kondisi fisik induk;
+   d. Menjaga keamanan dan keselamatan induk ikan hias dari risiko
+      kematian, pencurian, atau lepas dari wadah pemeliharaan.
+
+5. PENANGANAN KESEHATAN IKAN HIAS
+   a. Mengidentifikasi gejala klinis penyakit pada ikan hias berdasarkan
+      pengamatan tingkah laku, nafsu makan, dan kondisi fisik ikan;
+   b. Melakukan tindakan penanganan awal (first aid) apabila ditemukan
+      ikan sakit, antara lain pemisahan ikan sakit, perendaman dengan
+      garam, atau peningkatan suhu air sesuai jenis penyakit;
+   c. Melaporkan kasus penyakit kepada Supervisor disertai data jumlah
+      ikan terinfeksi, gejala yang diamati, dan tindakan yang telah
+      dilakukan;
+   d. Melaksanakan tindakan pengobatan sesuai arahan dari petugas
+      kesehatan ikan atau Supervisor;
+   e. Melaksanakan prosedur biosecurity standar, termasuk desinfeksi
+      peralatan sebelum berpindah antar unit pemeliharaan.
+
+6. DOKUMENTASI DAN PELAPORAN
+   a. Mengisi log book harian unit ikan hias secara lengkap dan akurat,
+      meliputi data pakan, kematian, kualitas air, dan kegiatan lainnya;
+   b. Menyusun laporan mingguan perkembangan unit ikan hias dan
+      menyampaikannya kepada Supervisor setiap hari Jumat;
+   c. Mendokumentasikan seluruh kegiatan pemijahan, pembenihan, dan
+      perawatan induk dalam formulir data yang telah ditetapkan.
+
+================================================================================
 C. TEKNISI IKAN NILA DAN BIOFLOK
-   (Suryadi, S.Si)
+   Suryadi, S.Si
+================================================================================
 
-   1. Melaksanakan pemeliharaan dan perawatan harian ikan nila pada kolam
-      pembesaran maupun sistem bioflok di Blok Belakang;
-   2. Mengelola dan memonitor sistem bioflok secara menyeluruh, meliputi
-      pengelolaan kualitas air, konsentrasi flok, aerasi, dan kepadatan
-      tebar;
-   3. Memantau parameter kualitas air pada unit ikan nila dan bioflok
-      (DO, pH, suhu, TAN, nitrit, nitrat, TSS) dan melakukan tindakan
-      korektif apabila terdapat penyimpangan;
-   4. Melaksanakan pemberian pakan ikan nila sesuai feeding rate dan
-      frekuensi yang telah ditentukan;
-   5. Melakukan pencatatan data sampling pertumbuhan ikan nila (bobot dan
-      panjang) secara berkala;
-   6. Menjaga kepadatan tebar dan melakukan grading ikan nila sesuai
-      kebutuhan;
-   7. Mendeteksi gejala penyakit atau stres pada ikan nila serta melakukan
-      penanganan awal;
-   8. Menjaga kebersihan kolam, peralatan aerasi, dan infrastruktur
-      pendukung unit ikan nila dan bioflok;
-   9. Melaporkan perkembangan produksi, kualitas air, dan permasalahan
-      teknis kepada Supervisor secara berkala.
+TUGAS POKOK:
 
---------------------------------------------------------------------------------
+1. PEMELIHARAAN HARIAN IKAN NILA
+   a. Melaksanakan pemberian pakan ikan nila minimal dua kali sehari
+      (pagi dan sore) sesuai feeding rate (FR) yang telah ditetapkan
+      berdasarkan biomassa terkini;
+   b. Menghitung dan mencatat jumlah pakan yang diberikan setiap hari
+      sebagai dasar perhitungan feed conversion ratio (FCR);
+   c. Melakukan pengamatan visual kondisi ikan nila setiap pagi sebelum
+      pemberian pakan untuk mendeteksi gejala penyakit, stres, atau
+      nafsu makan yang menurun;
+   d. Memungut dan mencatat ikan yang mati setiap hari, serta melaporkan
+      kepada Supervisor;
+   e. Memastikan kolam pemeliharaan ikan nila bersih dari gulma, sampah,
+      dan material asing lainnya.
 
+2. PENGELOLAAN SISTEM BIOFLOK
+   a. Memantau dan menjaga konsentrasi flok dalam sistem bioflok pada
+      rentang optimal (200-500 mL/L Settling Volume atau sesuai target
+      yang ditetapkan) dengan cara melakukan pengukuran menggunakan
+      imhoff cone setiap hari;
+   b. Melakukan penambahan sumber karbon (molase atau bahan lain yang
+      ditetapkan) apabila konsentrasi flok berada di bawah target atau
+      rasio C:N tidak optimal;
+   c. Membuang sebagian volume air (partial drain) dan menambahkan air
+      baru apabila konsentrasi flok terlalu tinggi atau kualitas air
+      menurun drastis;
+   d. Memastikan sistem aerasi pada unit bioflok berjalan optimal 24 jam
+      penuh; memeriksa pompa aerasi, diffuser, dan selang udara setiap
+      pagi dan sore;
+   e. Mencatat seluruh aktivitas pengelolaan bioflok (penambahan karbon,
+      partial drain, pergantian diffuser, dll.) dalam log book bioflok.
+
+3. MONITORING KUALITAS AIR
+   a. Mengukur dan mencatat parameter kualitas air pada kolam ikan nila
+      dan unit bioflok setiap hari, minimal meliputi: suhu, pH, dan DO;
+   b. Mengukur parameter Total Ammonia Nitrogen (TAN), nitrit (NO2),
+      dan Total Suspended Solid (TSS) minimal tiga kali per minggu
+      pada unit bioflok, dan minimal satu kali per minggu pada kolam
+      ikan nila konvensional;
+   c. Mengukur alkalinitas air minimal satu kali per minggu; menambahkan
+      kapur (CaCO3 atau Ca(OH)2) apabila alkalinitas turun di bawah
+      ambang batas optimal untuk mendukung pertumbuhan bioflok;
+   d. Melakukan tindakan korektif segera apabila parameter kualitas air
+      menyimpang dari rentang optimal, dan melaporkan kepada Supervisor
+      apabila penanganan mandiri tidak mencukupi;
+   e. Mencatat seluruh hasil pengukuran kualitas air dalam log book
+      secara sistematis.
+
+4. SAMPLING PERTUMBUHAN IKAN NILA
+   a. Melakukan sampling pertumbuhan ikan nila secara berkala minimal
+      setiap dua minggu, meliputi pengukuran bobot rata-rata dan panjang
+      rata-rata pada masing-masing kolam/unit;
+   b. Menghitung biomassa total ikan setiap kolam/unit berdasarkan hasil
+      sampling sebagai dasar penyesuaian jumlah pakan harian;
+   c. Menghitung dan mencatat Specific Growth Rate (SGR), FCR, dan
+      Survival Rate (SR) berdasarkan data sampling dan data pemberian
+      pakan;
+   d. Mendokumentasikan seluruh data sampling dalam formulir yang telah
+      ditetapkan dan melaporkan hasilnya kepada Supervisor.
+
+5. MANAJEMEN KEPADATAN DAN GRADING
+   a. Melakukan grading (pemisahan ukuran) ikan nila secara berkala
+      apabila terdapat keragaman ukuran yang signifikan dalam satu
+      kolam/unit, untuk mencegah persaingan pakan yang tidak merata;
+   b. Menyesuaikan kepadatan tebar apabila diperlukan berdasarkan
+      kondisi kualitas air, ukuran ikan, dan kapasitas unit pemeliharaan;
+   c. Melakukan pemindahan ikan antar kolam/unit sesuai arahan Supervisor
+      dan mendokumentasikan setiap proses pemindahan.
+
+6. PENANGANAN KESEHATAN IKAN NILA
+   a. Mengidentifikasi gejala klinis penyakit pada ikan nila berdasarkan
+      pengamatan tingkah laku, nafsu makan, dan kondisi fisik ikan secara
+      rutin;
+   b. Melakukan tindakan penanganan awal apabila ditemukan ikan sakit,
+      termasuk pemisahan ikan sakit ke wadah karantina;
+   c. Melaporkan kasus penyakit atau kematian abnormal kepada Supervisor
+      secara cepat disertai data pendukung;
+   d. Melaksanakan pengobatan sesuai arahan Supervisor atau petugas
+      kesehatan ikan yang berwenang.
+
+7. PEMELIHARAAN SARANA UNIT BIOFLOK DAN NILA
+   a. Menjaga kebersihan seluruh fasilitas unit ikan nila dan bioflok,
+      meliputi kolam, bak, saluran air, pompa, diffuser, dan peralatan
+      pendukung lainnya;
+   b. Membersihkan saluran pembuangan secara rutin agar tidak tersumbat;
+   c. Melaporkan kerusakan peralatan (pompa mati, kebocoran pipa, aerasi
+      tidak berfungsi, dll.) kepada Supervisor segera setelah ditemukan.
+
+8. DOKUMENTASI DAN PELAPORAN
+   a. Mengisi log book harian unit ikan nila dan bioflok secara lengkap
+      dan akurat;
+   b. Menyusun laporan mingguan perkembangan unit ikan nila dan bioflok
+      dan menyampaikannya kepada Supervisor setiap hari Jumat;
+   c. Mendokumentasikan data sampling pertumbuhan, kualitas air, dan
+      pengelolaan bioflok dalam formulir yang telah ditetapkan.
+
+================================================================================
 D. TEKNISI PAKAN ALAMI
-   (Tarmansyah)
+   Tarmansyah
+================================================================================
 
-   1. Melaksanakan produksi pakan alami (antara lain: Artemia, Daphnia,
-      Tubifex, Moina, Chlorella, Spirulina, dan/atau pakan alami lainnya
-      sesuai kebutuhan instalasi) secara rutin dan terjadwal;
-   2. Menjaga kesinambungan ketersediaan stok pakan alami untuk mendukung
-      kebutuhan seluruh unit pemeliharaan ikan di Blok Belakang;
-   3. Memantau kualitas dan kuantitas kultur pakan alami, serta melakukan
-      tindakan perbaikan apabila terjadi penurunan populasi atau kualitas;
-   4. Melaksanakan pemanenan, pengolahan, dan penyimpanan pakan alami
-      sesuai prosedur yang telah ditetapkan;
-   5. Menjaga kebersihan, sterilisasi wadah kultur, dan peralatan produksi
-      pakan alami untuk mencegah kontaminasi;
-   6. Mendistribusikan pakan alami ke unit-unit pemeliharaan ikan di Blok
-      Belakang sesuai jadwal dan kebutuhan;
-   7. Mencatat data produksi, konsumsi, dan stok pakan alami secara harian;
-   8. Melaporkan kondisi stok dan permasalahan dalam produksi pakan alami
-      kepada Supervisor secara berkala.
+JENIS PAKAN ALAMI YANG DIKELOLA:
+   - Daphnia sp.
+   - Moina sp.
+   - Cacing Sutra (Tubifex sp.)
+
+TUGAS POKOK:
+
+1. PRODUKSI DAN KULTUR DAPHNIA SP.
+   a. Melaksanakan kultur Daphnia sp. secara berkelanjutan pada wadah
+      yang telah ditetapkan (bak atau kolam kultur) untuk menjamin
+      ketersediaan stok pakan alami setiap hari;
+   b. Mempersiapkan media kultur Daphnia sp. dengan komposisi dan
+      konsentrasi nutrien yang sesuai (pupuk kandang, pupuk hijau,
+      atau media kultur lain yang ditetapkan), dan melakukan pemupukan
+      ulang secara berkala;
+   c. Memantau kepadatan populasi Daphnia sp. pada media kultur minimal
+      setiap dua hari menggunakan metode pengamatan visual atau
+      perhitungan sampel, dan melakukan tindakan perbaikan apabila
+      populasi menurun;
+   d. Melaksanakan pemanenan Daphnia sp. menggunakan jaring halus (waring
+      atau seser halus) sesuai jadwal kebutuhan pakan, dengan frekuensi
+      panen menyesuaikan kebutuhan unit pemeliharaan ikan;
+   e. Membilas hasil panen Daphnia sp. dengan air bersih sebelum
+      diberikan kepada ikan untuk meminimalkan risiko masuknya patogen
+      dari media kultur;
+   f. Menjaga kebersihan wadah kultur dan mencegah kontaminasi dari
+      organisme pengganggu (predator, kompetitor, atau pathogen);
+   g. Melakukan pembaruan (restart) kultur apabila populasi Daphnia sp.
+      mengalami crash (kolaps massal) dengan menggunakan stok induk
+      cadangan yang dipelihara terpisah.
+
+2. PRODUKSI DAN KULTUR MOINA SP.
+   a. Melaksanakan kultur Moina sp. secara berkelanjutan sebagai
+      alternatif atau pelengkap pakan alami Daphnia sp., pada wadah
+      kultur yang telah ditetapkan;
+   b. Mempersiapkan dan mengelola media kultur Moina sp. (pupuk kandang,
+      kotoran ayam, atau media berbasis bahan organik lain yang sesuai)
+      dengan dosis dan frekuensi pemupukan yang tepat;
+   c. Memantau kepadatan populasi Moina sp. secara berkala dan melakukan
+      penyesuaian media atau densitas kultur apabila diperlukan;
+   d. Melaksanakan pemanenan Moina sp. sesuai jadwal dan kebutuhan unit
+      pemeliharaan, dengan metode panen yang sama seperti Daphnia sp.;
+   e. Memisahkan dan memelihara stok induk Moina sp. cadangan pada wadah
+      terpisah sebagai penjamin keberlangsungan kultur;
+   f. Mengkoordinasikan jadwal panen Moina sp. dengan jadwal panen
+      Daphnia sp. agar ketersediaan pakan alami terjaga merata setiap
+      harinya.
+
+3. PENGELOLAAN CACING SUTRA (TUBIFEX SP.)
+   a. Melaksanakan pemeliharaan dan pembudidayaan cacing sutra
+      (Tubifex sp.) pada media lumpur atau substrat yang sesuai
+      di wadah/bak yang telah ditetapkan;
+   b. Menjaga aliran air yang lambat dan merata pada media pemeliharaan
+      cacing sutra untuk menjamin ketersediaan oksigen dan mencegah
+      penumpukan gas beracun (H2S) di dalam substrat;
+   c. Memberikan pakan cacing sutra berupa kotoran ternak (sapi/ayam),
+      ampas tahu, atau bahan organik lain yang sesuai secara rutin dan
+      terdosir agar pertumbuhan cacing optimal;
+   d. Melaksanakan pemanenan cacing sutra menggunakan metode yang tepat
+      (pencucian bertahap, penyaringan) sesuai jadwal kebutuhan pakan,
+      memastikan cacing yang dipanen dalam kondisi bersih dan hidup;
+   e. Membersihkan media pemeliharaan cacing sutra secara berkala
+      (minimal satu kali per bulan atau sesuai kondisi) untuk mencegah
+      penumpukan kotoran berlebih yang dapat menyebabkan kematian massal;
+   f. Memantau kondisi populasi cacing sutra setiap hari (kepadatan,
+      warna media, bau) dan melakukan tindakan korektif apabila ada
+      indikasi penurunan kondisi;
+   g. Menjaga stok cacing sutra agar selalu tersedia sesuai kebutuhan
+      unit pemeliharaan larva dan benih ikan.
+
+4. DISTRIBUSI PAKAN ALAMI KE UNIT PEMELIHARAAN
+   a. Mendistribusikan Daphnia sp., Moina sp., dan cacing sutra ke
+      unit-unit pemeliharaan ikan (unit ikan hias dan unit pembenihan)
+      sesuai jadwal dan kebutuhan yang telah dikoordinasikan dengan
+      Supervisor dan masing-masing teknisi;
+   b. Mengukur dan menakar volume atau berat pakan alami yang
+      didistribusikan setiap hari sebagai data konsumsi;
+   c. Memastikan pakan alami yang didistribusikan dalam kondisi hidup
+      dan segar; tidak mendistribusikan pakan alami yang telah mati
+      atau terindikasi terkontaminasi;
+   d. Berkoordinasi dengan Teknisi Ikan Hias dan Teknisi Ikan Nila
+      terkait kebutuhan pakan alami harian agar produksi dapat
+      disesuaikan.
+
+5. PENGELOLAAN STOK DAN CADANGAN KULTUR
+   a. Memelihara stok induk cadangan untuk setiap jenis pakan alami
+      (Daphnia sp., Moina sp., Tubifex sp.) pada wadah terpisah sebagai
+      antisipasi kegagalan kultur utama;
+   b. Memantau stok pakan alami yang tersedia setiap hari dan
+      memproyeksikan ketersediaan stok untuk tiga hari ke depan sebagai
+      dasar perencanaan produksi;
+   c. Melaporkan kepada Supervisor apabila stok pakan alami diprediksi
+      tidak mencukupi kebutuhan minimal dua hari sebelum kekurangan
+      terjadi, agar dapat diantisipasi.
+
+6. PENGELOLAAN MEDIA DAN SARANA KULTUR
+   a. Menjaga kebersihan seluruh wadah dan sarana kultur pakan alami
+      (bak, kolam, selang air, aerasi, seser panen) agar terhindar
+      dari kontaminasi;
+   b. Melakukan sterilisasi wadah kultur (pengeringan, pencucian dengan
+      air kapur atau klorin) sebelum memulai siklus kultur baru;
+   c. Memastikan ketersediaan bahan dan media kultur (pupuk, bahan
+      organik, dll.) dan melaporkan kepada Supervisor apabila stok
+      bahan menipis agar dapat segera dilakukan pengadaan;
+   d. Melaporkan kerusakan sarana kultur kepada Supervisor segera setelah
+      ditemukan.
+
+7. DOKUMENTASI DAN PELAPORAN
+   a. Mencatat data produksi harian setiap jenis pakan alami (volume
+      kultur, volume panen, volume distribusi, kondisi populasi) dalam
+      log book pakan alami;
+   b. Mencatat kejadian penting dalam kultur pakan alami (crash populasi,
+      kontaminasi, restart kultur) beserta tindakan penanganan yang
+      dilakukan;
+   c. Menyusun laporan mingguan produksi dan distribusi pakan alami dan
+      menyampaikannya kepada Supervisor setiap hari Jumat.
 
 ================================================================================
 
@@ -202,23 +496,30 @@ SISTEM KERJA
 3. Setiap petugas wajib mematuhi Prosedur Operasional Standar (SOP) yang
    telah ditetapkan untuk masing-masing unit kerja.
 4. Setiap petugas wajib menggunakan alat pelindung diri (APD) yang
-   diperlukan saat bekerja.
+   diperlukan saat bekerja, meliputi: sepatu boot, sarung tangan, dan
+   pakaian kerja yang sesuai.
 5. Apabila terdapat kondisi darurat (kematian massal ikan, kerusakan
-   sarana, pencemaran, dsb.), petugas wajib segera melaporkan kepada
-   Supervisor dan/atau Kepala Instalasi.
+   sarana, wabah penyakit, pencemaran, dll.), petugas wajib segera
+   melaporkan kepada Supervisor dan/atau Kepala Instalasi.
 6. Seluruh petugas wajib menjaga kerahasiaan data dan informasi terkait
    sumber daya plasma nutfah yang dikelola.
+7. Dilarang membawa masuk hewan, tanaman, atau organisme apapun ke dalam
+   area Blok Belakang tanpa seizin Kepala Instalasi.
 
 ================================================================================
 
 PASAL 5
 PELAPORAN DAN EVALUASI
 
-1. Setiap teknisi menyampaikan laporan harian kepada Supervisor.
-2. Supervisor menyusun laporan bulanan dan menyampaikannya kepada Kepala
-   Instalasi paling lambat tanggal 5 pada bulan berikutnya.
-3. Evaluasi kinerja dan kegiatan di Blok Belakang dilaksanakan minimal
-   satu kali dalam tiga bulan.
+1. Setiap teknisi menyampaikan laporan harian secara lisan dan tertulis
+   (log book) kepada Supervisor.
+2. Setiap teknisi menyampaikan laporan mingguan tertulis kepada Supervisor
+   paling lambat setiap hari Jumat.
+3. Supervisor menyusun laporan bulanan komprehensif dan menyampaikannya
+   kepada Kepala Instalasi paling lambat tanggal 5 pada bulan berikutnya.
+4. Evaluasi kinerja dan kegiatan di Blok Belakang dilaksanakan minimal
+   satu kali dalam tiga bulan melalui rapat evaluasi yang dipimpin oleh
+   Kepala Instalasi atau Supervisor.
 
 ================================================================================
 
@@ -241,14 +542,15 @@ Perikanan Air Tawar Cijeruk,
 
 
 
+
 (________________________________)
 Aditiya Nugraha, S.Pi
-NIP. ..............................
+NIP. 198601302009011001
 
 ================================================================================
 
 Salinan disampaikan kepada Yth.:
-1. Kepala Balai Pengembangan dan Pembenihan Ikan Budidaya Cijeruk;
+1. Kepala Balai Riset Perikanan Budidaya Air Tawar dan Penyuluhan Perikanan;
 2. Firmansyah, A.Md (Supervisor Blok Belakang);
 3. Heri Arif R, A.Md (Teknisi Ikan Hias);
 4. Suryadi, S.Si (Teknisi Ikan Nila dan Bioflok);
