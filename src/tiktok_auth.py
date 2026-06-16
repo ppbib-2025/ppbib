@@ -34,7 +34,7 @@ def get_auth_url():
 
     params = {
         "client_key": CLIENT_KEY,
-        "scope": "user.info.basic,video.list,comment.list,comment.list.manage",
+        "scope": "user.info.profile,user.info.stats,video.list",
         "response_type": "code",
         "redirect_uri": REDIRECT_URI,
         "state": "ppbib_automation",

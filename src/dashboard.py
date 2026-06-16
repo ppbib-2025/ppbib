@@ -1,19 +1,26 @@
 """
 Dashboard analytics PPBIB — bisa dibuka di browser kapan saja.
-Route: GET /          → status bot
-       GET /analytics → tabel performa konten semua platform
+Routes:
+  GET  /                       -> status bot
+  GET  /analytics              -> tabel performa konten semua platform
+  GET  /analytics/refresh      -> trigger collect metrics, redirect ke /analytics
+  GET  /setup                  -> halaman setup token OAuth
+  GET  /setup/tiktok           -> mulai OAuth TikTok
+  GET  /setup/tiktok/callback  -> callback dari TikTok OAuth
 """
 import json
 import os
+import threading
 from datetime import datetime
-from flask import Flask
+from flask import Flask, redirect, request
 
 app = Flask(__name__)
 
-TIKTOK_FILE  = "data/analytics_tiktok.json"
-IG_FILE      = "data/analytics_instagram.json"
-FB_FILE      = "data/analytics_facebook.json"
-STRATEGY_FILE = "data/strategy_insights.json"
+TIKTOK_FILE   = "data/analytics_tiktok.json"
+IG_FILE        = "data/analytics_instagram.json"
+FB_FILE        = "data/analytics_facebook.json"
+STRATEGY_FILE  = "data/strategy_insights.json"
+REFRESH_FLAG   = "data/.refresh_running"
 
 
 def _load(path: str) -> dict:
@@ -35,17 +42,90 @@ def _num(n: int) -> str:
     return f"{n:,}"
 
 
+# ── HTML helpers ─────────────────────────────────────────────────────────────
+
+BASE_CSS = """
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f4;color:#222}
+.hdr{background:#1a1a2e;color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between}
+.hdr h1{font-size:18px;font-weight:700}
+.hdr p{font-size:12px;opacity:.6;margin-top:3px}
+.hdr-links a{color:#a5b4fc;font-size:13px;text-decoration:none;margin-left:16px}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+.card{background:#fff;border-radius:10px;padding:18px 20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h2{font-size:14px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #eee}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;padding:7px 9px;background:#f8f8f8;font-weight:600;color:#555;border-bottom:2px solid #e8e8e8}
+td{padding:7px 9px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+tr:last-child td{border:none}
+.er{font-weight:700}
+.er-high{color:#16a34a}
+.er-mid{color:#d97706}
+.er-low{color:#dc2626}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:600;background:#e0e7ff;color:#4338ca}
+.empty{color:#999;font-size:13px;padding:6px 0}
+.strat{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:13px;font-size:13px;line-height:1.7}
+.meta{font-size:11px;color:#777;margin-bottom:8px}
+ul{margin-left:18px;margin-top:4px}
+li{margin-bottom:3px}
+.btn{display:inline-block;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;border:none}
+.btn-primary{background:#1a1a2e;color:#fff}
+.btn-tiktok{background:#000;color:#fff}
+.btn-refresh{background:#059669;color:#fff}
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px}
+.alert-ok{background:#d1fae5;border:1px solid #6ee7b7;color:#065f46}
+.alert-err{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b}
+.alert-info{background:#e0f2fe;border:1px solid #7dd3fc;color:#075985}
+"""
+
+
+def _page(title: str, body: str, refresh_secs: int = 0) -> str:
+    refresh_tag = f'<meta http-equiv="refresh" content="{refresh_secs}">' if refresh_secs else ""
+    now_str = datetime.now().strftime("%d %b %Y %H:%M")
+    return f"""<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+{refresh_tag}
+<title>{title}</title>
+<style>{BASE_CSS}</style>
+</head>
+<body>
+<div class="hdr">
+  <div>
+    <h1>&#128202; PPBIB Analytics Dashboard</h1>
+    <p>Update terakhir: {now_str}</p>
+  </div>
+  <div class="hdr-links">
+    <a href="/analytics">Analytics</a>
+    <a href="/setup">Setup Token</a>
+    <a href="/analytics/refresh">&#128260; Refresh</a>
+  </div>
+</div>
+<div class="wrap">{body}</div>
+</body></html>"""
+
+
+# ── Routes ───────────────────────────────────────────────────────────────────
+
 @app.route("/")
 def home():
-    return (
-        "<h3 style='font-family:sans-serif;padding:20px'>PPBIB Bot aktif ✅</h3>"
-        "<p style='font-family:sans-serif;padding:0 20px'>"
-        "<a href='/analytics'>Lihat Analytics</a></p>"
-    )
+    body = """
+    <div class="card">
+      <h2>&#127774; Status Bot</h2>
+      <p style="font-size:14px;margin-bottom:16px">PPBIB Bot aktif &#9989;</p>
+      <a href="/analytics" class="btn btn-primary" style="margin-right:8px">Lihat Analytics</a>
+      <a href="/setup" class="btn" style="background:#6366f1;color:#fff">Setup Token OAuth</a>
+    </div>
+    """
+    return _page("PPBIB Bot", body)
 
 
 @app.route("/analytics")
 def analytics():
+    is_refreshing = os.path.exists(REFRESH_FLAG)
+
     # ── TikTok
     tiktok_rows = []
     for vid_id, d in _load(TIKTOK_FILE).items():
@@ -112,52 +192,11 @@ def analytics():
     fb_rows.sort(key=lambda x: x["er"], reverse=True)
 
     # ── Auto Research
-    strategy   = _load(STRATEGY_FILE)
-    now_str    = datetime.now().strftime("%d %b %Y %H:%M")
-
-    # ── HTML
-    html = f"""<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PPBIB Analytics</title>
-<style>
-*{{box-sizing:border-box;margin:0;padding:0}}
-body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f4;color:#222}}
-.hdr{{background:#1a1a2e;color:#fff;padding:18px 24px}}
-.hdr h1{{font-size:18px;font-weight:700}}
-.hdr p{{font-size:12px;opacity:.6;margin-top:3px}}
-.wrap{{max-width:1100px;margin:0 auto;padding:20px}}
-.card{{background:#fff;border-radius:10px;padding:18px 20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}}
-.card h2{{font-size:14px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #eee}}
-table{{width:100%;border-collapse:collapse;font-size:12.5px}}
-th{{text-align:left;padding:7px 9px;background:#f8f8f8;font-weight:600;color:#555;border-bottom:2px solid #e8e8e8}}
-td{{padding:7px 9px;border-bottom:1px solid #f0f0f0;vertical-align:top}}
-tr:last-child td{{border:none}}
-.er{{font-weight:700}}
-.er-high{{color:#16a34a}}
-.er-mid{{color:#d97706}}
-.er-low{{color:#dc2626}}
-.badge{{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:600;background:#e0e7ff;color:#4338ca}}
-.empty{{color:#999;font-size:13px;padding:6px 0}}
-.strat{{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:13px;font-size:13px;line-height:1.7}}
-.meta{{font-size:11px;color:#777;margin-bottom:8px}}
-ul{{margin-left:18px;margin-top:4px}}
-li{{margin-bottom:3px}}
-</style>
-</head>
-<body>
-<div class="hdr">
-  <h1>&#128202; PPBIB Analytics Dashboard</h1>
-  <p>Update terakhir: {now_str}</p>
-</div>
-<div class="wrap">
-"""
+    strategy = _load(STRATEGY_FILE)
 
     def _table_tiktok(rows):
         if not rows:
-            return '<p class="empty">Belum ada data. Pastikan TikTok token sudah di-setup.</p>'
+            return '<p class="empty">Belum ada data. <a href="/setup">Setup token TikTok</a> lalu klik Refresh.</p>'
         h  = '<table><thead><tr><th>#</th><th>Konten</th><th>Views</th><th>Likes</th>'
         h += '<th>Komentar</th><th>Share</th><th>ER%</th></tr></thead><tbody>'
         for i, r in enumerate(rows[:15], 1):
@@ -170,7 +209,7 @@ li{{margin-bottom:3px}}
 
     def _table_ig(rows):
         if not rows:
-            return '<p class="empty">Belum ada data. Pastikan Instagram token sudah di-setup.</p>'
+            return '<p class="empty">Belum ada data. Token Instagram belum di-setup.</p>'
         h  = '<table><thead><tr><th>#</th><th>Konten</th><th>Tipe</th><th>Likes</th>'
         h += '<th>Komentar</th><th>Impresi</th><th>ER%</th></tr></thead><tbody>'
         for i, r in enumerate(rows[:15], 1):
@@ -195,33 +234,162 @@ li{{margin-bottom:3px}}
                   f'<td class="er {ec}">{r["er"]}%</td></tr>')
         return h + '</tbody></table>'
 
-    html += f'<div class="card"><h2>&#127916; TikTok</h2>{_table_tiktok(tiktok_rows)}</div>'
-    html += f'<div class="card"><h2 style="color:#C13584">&#128247; Instagram</h2>{_table_ig(ig_rows)}</div>'
-    html += f'<div class="card"><h2 style="color:#1877F2">&#128216; Facebook</h2>{_table_fb(fb_rows)}</div>'
+    refresh_banner = ""
+    refresh_secs = 0
+    if is_refreshing:
+        refresh_banner = '<div class="alert alert-info">&#9203; Sedang mengambil data terbaru... halaman akan refresh otomatis.</div>'
+        refresh_secs = 4
+
+    body = refresh_banner
+    body += f'<div class="card"><h2>&#127916; TikTok</h2>{_table_tiktok(tiktok_rows)}</div>'
+    body += f'<div class="card"><h2 style="color:#C13584">&#128247; Instagram</h2>{_table_ig(ig_rows)}</div>'
+    body += f'<div class="card"><h2 style="color:#1877F2">&#128216; Facebook</h2>{_table_fb(fb_rows)}</div>'
 
     # Auto Research card
-    html += '<div class="card"><h2>&#128300; Auto Research'
+    body += '<div class="card"><h2>&#128300; Auto Research'
     if strategy:
         iteration = strategy.get("iteration", "-")
         week      = strategy.get("week_analyzed", "-")
         strat_txt = strategy.get("strategy_prompt", "-")
         patterns  = strategy.get("top_performing_patterns", {})
-        html += f' &mdash; Iterasi #{iteration}</h2>'
-        html += f'<p class="meta">Analisis pekan {week}</p>'
-        html += f'<div class="strat">{strat_txt}</div>'
+        body += f' &mdash; Iterasi #{iteration}</h2>'
+        body += f'<p class="meta">Analisis pekan {week}</p>'
+        body += f'<div class="strat">{strat_txt}</div>'
         if patterns.get("winning_topics"):
-            html += '<p style="margin-top:12px;font-size:13px"><strong>&#9989; Topik pemenang:</strong></p><ul>'
+            body += '<p style="margin-top:12px;font-size:13px"><strong>&#9989; Topik pemenang:</strong></p><ul>'
             for t in patterns["winning_topics"]:
-                html += f'<li style="font-size:13px">{t}</li>'
-            html += '</ul>'
+                body += f'<li style="font-size:13px">{t}</li>'
+            body += '</ul>'
         if patterns.get("avoid_patterns"):
-            html += '<p style="margin-top:10px;font-size:13px"><strong>&#10060; Hindari:</strong></p><ul>'
+            body += '<p style="margin-top:10px;font-size:13px"><strong>&#10060; Hindari:</strong></p><ul>'
             for t in patterns["avoid_patterns"]:
-                html += f'<li style="font-size:13px">{t}</li>'
-            html += '</ul>'
+                body += f'<li style="font-size:13px">{t}</li>'
+            body += '</ul>'
     else:
-        html += '</h2><p class="empty">Auto research belum pernah jalan. Akan berjalan otomatis tiap Sabtu 17:00.</p>'
-    html += '</div>'
+        body += '</h2><p class="empty">Auto research belum pernah jalan. Akan berjalan otomatis tiap Sabtu 17:00.</p>'
+    body += '</div>'
 
-    html += '</div></body></html>'
-    return html
+    return _page("PPBIB Analytics", body, refresh_secs=refresh_secs)
+
+
+@app.route("/analytics/refresh")
+def analytics_refresh():
+    if os.path.exists(REFRESH_FLAG):
+        return redirect("/analytics")
+
+    os.makedirs("data", exist_ok=True)
+    open(REFRESH_FLAG, "w").close()
+
+    def _do_refresh():
+        try:
+            from src.analytics import (
+                collect_tiktok_metrics,
+                collect_instagram_metrics,
+                collect_facebook_metrics,
+            )
+            try:
+                collect_tiktok_metrics()
+            except Exception as e:
+                print(f"[Refresh] TikTok error: {e}")
+            try:
+                collect_instagram_metrics()
+            except Exception as e:
+                print(f"[Refresh] Instagram error: {e}")
+            try:
+                collect_facebook_metrics()
+            except Exception as e:
+                print(f"[Refresh] Facebook error: {e}")
+        finally:
+            if os.path.exists(REFRESH_FLAG):
+                os.remove(REFRESH_FLAG)
+
+    threading.Thread(target=_do_refresh, daemon=True).start()
+    return redirect("/analytics")
+
+
+# ── Setup OAuth ───────────────────────────────────────────────────────────────
+
+@app.route("/setup")
+def setup():
+    from src.tiktok_auth import load_token as tiktok_load
+    tk_ok = tiktok_load() is not None
+    tk_status = '&#9989; Token aktif' if tk_ok else '&#10060; Belum ada token'
+    tk_btn_label = 'Perbarui Token TikTok' if tk_ok else 'Hubungkan TikTok'
+
+    tiktok_key = os.getenv("TIKTOK_CLIENT_KEY", "")
+    tiktok_secret = os.getenv("TIKTOK_CLIENT_SECRET", "")
+    tiktok_redirect = os.getenv("TIKTOK_REDIRECT_URI", "")
+
+    if not tiktok_key or not tiktok_secret or not tiktok_redirect:
+        env_warn = '<div class="alert alert-err">&#9888; Env vars TikTok belum diset di Railway: <code>TIKTOK_CLIENT_KEY</code>, <code>TIKTOK_CLIENT_SECRET</code>, <code>TIKTOK_REDIRECT_URI</code></div>'
+    else:
+        env_warn = '<div class="alert alert-ok">&#9989; Env vars TikTok sudah diset.</div>'
+
+    body = f"""
+    <div class="card">
+      <h2>&#128273; Setup Token OAuth</h2>
+      <p style="font-size:13px;color:#555;margin-bottom:20px">
+        Hubungkan akun media sosial untuk mengambil data analytics.
+      </p>
+
+      <h3 style="font-size:13px;font-weight:700;margin-bottom:10px">&#127916; TikTok</h3>
+      {env_warn}
+      <p style="font-size:13px;margin-bottom:12px">Status: {tk_status}</p>
+      <a href="/setup/tiktok" class="btn btn-tiktok">&#9654; {tk_btn_label}</a>
+    </div>
+
+    <div class="card">
+      <h2>&#128247; Instagram / Facebook</h2>
+      <p style="font-size:13px;color:#555">
+        Setup Instagram dan Facebook menggunakan Facebook OAuth.
+        Panduan akan ditambahkan di langkah berikutnya.
+      </p>
+    </div>
+    """
+    return _page("Setup Token", body)
+
+
+@app.route("/setup/tiktok")
+def setup_tiktok():
+    from src.tiktok_auth import get_auth_url
+    try:
+        url = get_auth_url()
+        return redirect(url)
+    except Exception as e:
+        body = f'<div class="card"><div class="alert alert-err">Error membuat URL: {e}<br><br>Pastikan env vars <code>TIKTOK_CLIENT_KEY</code>, <code>TIKTOK_CLIENT_SECRET</code>, dan <code>TIKTOK_REDIRECT_URI</code> sudah diset di Railway.</div></div>'
+        return _page("TikTok OAuth Error", body)
+
+
+@app.route("/setup/tiktok/callback")
+def setup_tiktok_callback():
+    code  = request.args.get("code", "")
+    error = request.args.get("error", "")
+    error_desc = request.args.get("error_description", "")
+
+    if error:
+        body = f'<div class="card"><div class="alert alert-err"><strong>TikTok error:</strong> {error}<br>{error_desc}</div><p style="margin-top:12px"><a href="/setup">Coba lagi</a></p></div>'
+        return _page("TikTok OAuth Gagal", body)
+
+    if not code:
+        body = '<div class="card"><div class="alert alert-err">Tidak ada kode dari TikTok.</div><p style="margin-top:12px"><a href="/setup">Coba lagi</a></p></div>'
+        return _page("TikTok OAuth Gagal", body)
+
+    from src.tiktok_auth import exchange_code_for_token
+    result = exchange_code_for_token(code)
+
+    if "data" in result and "access_token" in result.get("data", {}):
+        body = """
+        <div class="card">
+          <div class="alert alert-ok">&#9989; Token TikTok berhasil disimpan!</div>
+          <p style="font-size:13px;margin-top:12px">Sekarang kamu bisa klik <strong>Refresh</strong> di dashboard untuk mengambil data video TikTok.</p>
+          <p style="margin-top:16px">
+            <a href="/analytics" class="btn btn-primary" style="margin-right:8px">Ke Analytics</a>
+            <a href="/analytics/refresh" class="btn btn-refresh">Refresh Data Sekarang</a>
+          </p>
+        </div>
+        """
+        return _page("TikTok Terhubung!", body)
+    else:
+        err_msg = json.dumps(result, indent=2)
+        body = f'<div class="card"><div class="alert alert-err"><strong>Gagal tukar token:</strong><br><pre style="font-size:11px;margin-top:8px;overflow:auto">{err_msg}</pre></div><p style="margin-top:12px"><a href="/setup">Coba lagi</a></p></div>'
+        return _page("TikTok OAuth Gagal", body)
