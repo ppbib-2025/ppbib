@@ -27,11 +27,13 @@ from src.auto_research import run_weekly_evaluation
 from src.video_producer import produce_todays_video, format_video_ready_wa
 from src.whatsapp import send_whatsapp, is_wa_connected
 from src.dashboard import app as flask_app
+from src.stock_screener import run_screen, format_screen_report
 
-WA_NUMBER       = os.getenv("WHATSAPP_NUMBER", "")
+WA_NUMBER        = os.getenv("WHATSAPP_NUMBER", "")
 REPORT_WA_NUMBER = os.getenv("REPORT_WA_NUMBER", WA_NUMBER)
-VIDEO_ENABLED   = bool(os.getenv("FAL_KEY"))
-TIKTOK_ENABLED  = bool(load_token())
+VIDEO_ENABLED    = bool(os.getenv("FAL_KEY"))
+TIKTOK_ENABLED   = bool(load_token())
+STOCK_SCREEN_ENABLED = bool(os.getenv("STOCK_SCREEN_ENABLED", "true"))
 
 
 def _send_wa(msg: str, label: str):
@@ -127,6 +129,23 @@ def job_daily_content_reminder():
         print("[Content] Tidak ada konten terjadwal hari ini.")
 
 
+# ── Stock Screener ───────────────────────────────────────────
+
+def job_stock_screen():
+    """Senin-Jumat 08:30 — screening saham IDX dengan BoW + Piotroski + Magic Formula."""
+    if not STOCK_SCREEN_ENABLED:
+        return
+    print("[Screener] Menjalankan screening saham IDX...")
+    try:
+        results = run_screen()
+        report  = format_screen_report(results)
+        print(report)
+        _send_wa(report, "Screening saham IDX")
+    except Exception as e:
+        print(f"[Screener] ERROR: {e}")
+        _send_wa(f"⚠️ Screener saham gagal: {e}", "Error screener")
+
+
 # ── Video Producer ────────────────────────────────────────────
 
 def job_produce_video():
@@ -175,6 +194,7 @@ if __name__ == "__main__":
     scheduler.add_job(job_scan,     "interval", minutes=15, id="scan")
     scheduler.add_job(job_followup, "interval", hours=6,    id="followup")
 
+    scheduler.add_job(job_stock_screen,            "cron", day_of_week="mon-fri", hour=8, minute=30, id="stock_screen")
     scheduler.add_job(job_collect_analytics,      "cron", hour=19, minute=0,                    id="analytics_collect")
     scheduler.add_job(job_daily_report,           "cron", hour=20, minute=0,                    id="analytics_daily")
     scheduler.add_job(job_weekly_report,          "cron", day_of_week="mon", hour=7,  minute=0, id="analytics_weekly")
@@ -183,7 +203,11 @@ if __name__ == "__main__":
     scheduler.add_job(job_generate_content,       "cron", day_of_week="sun", hour=18, minute=0, id="content_generate")
     scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                    id="video_produce")
 
+    print(f"  Stock Screener: {'AKTIF' if STOCK_SCREEN_ENABLED else 'NONAKTIF (set STOCK_SCREEN_ENABLED=false untuk matikan)'}")
+    print("=" * 50)
+
     print("Scheduler aktif:")
+    print("  - Screener saham IDX  : Senin-Jumat 08:30")
     print("  - Snapshot metrics    : tiap hari 19:00")
     print("  - Laporan harian WA   : tiap hari 20:00")
     print("  - Laporan mingguan    : Senin 07:00")
