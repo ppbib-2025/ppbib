@@ -36,6 +36,7 @@ _WORKERS = 5
 # ── BB5 / BB4 ────────────────────────────────────────────────────────────────
 
 def _score_bb(ticker: str, rsi_max: float, proximity_max_pct: float) -> Optional[dict]:
+    import pandas as pd
     df = fetch_ohlcv(ticker, period="1y", interval="1d")
     if df.empty or len(df) < 60:
         return None
@@ -45,6 +46,10 @@ def _score_bb(ticker: str, rsi_max: float, proximity_max_pct: float) -> Optional
 
     cur_close = float(df["Close"].iloc[-1])
     cur_rsi   = float(rsi.iloc[-1])
+
+    # Skip if RSI could not be calculated (bad/insufficient data)
+    if pd.isna(cur_rsi) or pd.isna(cur_close):
+        return None
 
     low_52w   = float(df["Low"].tail(252).min())
     proximity = (cur_close - low_52w) / low_52w * 100
@@ -108,6 +113,7 @@ def score_bb4(universe: Optional[list] = None) -> list[dict]:
 # ── ACREV ────────────────────────────────────────────────────────────────────
 
 def _score_acrev(ticker: str) -> Optional[dict]:
+    import pandas as pd
     df = fetch_ohlcv(ticker, period="6mo", interval="1d")
     if df.empty or len(df) < 30:
         return None
@@ -117,6 +123,8 @@ def _score_acrev(ticker: str) -> Optional[dict]:
 
     cur_close = float(df["Close"].iloc[-1])
     cur_rsi   = float(rsi.iloc[-1])
+    if pd.isna(cur_rsi) or pd.isna(cur_close):
+        return None
 
     div   = detect_bullish_divergence(df["Close"], rsi)
     spike = detect_volume_spike(df)
@@ -155,6 +163,7 @@ def score_acrev(universe: Optional[list] = None) -> list[dict]:
 # ── PC (Price Concentration) ─────────────────────────────────────────────────
 
 def _score_pc(ticker: str, level: int) -> Optional[dict]:
+    import pandas as pd
     thresholds = {1: 3.0, 2: 5.0, 3: 8.0}
     thr = thresholds.get(level, 5.0)
 
@@ -164,6 +173,8 @@ def _score_pc(ticker: str, level: int) -> Optional[dict]:
 
     rsi = calculate_rsi_composite(df)
     cur_close = float(df["Close"].iloc[-1])
+    if pd.isna(cur_close):
+        return None
 
     rng = (float(df["High"].tail(10).max()) - float(df["Low"].tail(10).min())) / cur_close * 100
     if rng > thr:
@@ -194,6 +205,7 @@ def score_pc(level: int = 1, universe: Optional[list] = None) -> list[dict]:
 # ── HLFIBO ───────────────────────────────────────────────────────────────────
 
 def _score_hlfibo(ticker: str, proximity_pct: float, min_level: float, quality: int) -> Optional[dict]:
+    import pandas as pd
     df = fetch_ohlcv(ticker, period="1y", interval="1d")
     if df.empty or len(df) < 60:
         return None
@@ -202,6 +214,8 @@ def _score_hlfibo(ticker: str, proximity_pct: float, min_level: float, quality: 
     rsi = calculate_rsi_composite(df)
     cur_close = float(df["Close"].iloc[-1])
     cur_rsi   = float(rsi.iloc[-1])
+    if pd.isna(cur_close) or pd.isna(cur_rsi):
+        return None
 
     # Support-zone fibonacci levels
     support_lvls = ["0.236", "0.382", "0.5", "0.618"]

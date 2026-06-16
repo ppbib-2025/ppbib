@@ -40,17 +40,33 @@ def fetch_ohlcv(ticker: str, period: str = "1y", interval: str = "1d") -> pd.Dat
         try:
             df = pd.read_json(cache)
             df.index = pd.to_datetime(df.index)
-            return df
+            if not df.empty and "Close" in df.columns and df["Close"].notna().sum() >= 30:
+                return df
         except Exception:
+            pass
+        # Cache invalid — delete it
+        try:
+            os.remove(cache)
+        except OSError:
             pass
 
     try:
-        df = yf.download(yf_ticker, period=period, interval=interval,
-                         progress=False, auto_adjust=True)
+        # yf.Ticker().history() is more auth-stable than yf.download()
+        tkr = yf.Ticker(yf_ticker)
+        df  = tkr.history(period=period, interval=interval, auto_adjust=True)
         if df.empty:
             return pd.DataFrame()
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
+
+        # Normalise columns — keep only OHLCV
+        df.columns = [c.title() for c in df.columns]
+        keep = [c for c in ("Open", "High", "Low", "Close", "Volume") if c in df.columns]
+        df = df[keep].copy()
+
+        # Drop rows with NaN close
+        df = df.dropna(subset=["Close"])
+        if len(df) < 30:
+            return pd.DataFrame()
+
         df.to_json(cache)
         return df
     except Exception as e:
