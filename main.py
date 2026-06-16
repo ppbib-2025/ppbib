@@ -25,25 +25,23 @@ from src.content_generator import (
 )
 from src.auto_research import run_weekly_evaluation
 from src.video_producer import produce_todays_video, format_video_ready_wa
-from src.whatsapp import send_whatsapp, is_wa_connected
 from src.dashboard import app as flask_app
 from src.stock_screener import run_screen, format_screen_report
 from src.trading_sim import run_daily_trading, format_trading_report, reset_simulation
+from src.notifier import send_notification, is_notifier_ready
 
-WA_NUMBER        = os.getenv("WHATSAPP_NUMBER", "")
-REPORT_WA_NUMBER = os.getenv("REPORT_WA_NUMBER", WA_NUMBER)
-VIDEO_ENABLED    = bool(os.getenv("FAL_KEY"))
-TIKTOK_ENABLED   = bool(load_token())
+VIDEO_ENABLED         = bool(os.getenv("FAL_KEY"))
+TIKTOK_ENABLED        = bool(load_token())
 STOCK_SCREEN_ENABLED  = bool(os.getenv("STOCK_SCREEN_ENABLED", "true"))
 TRADING_SIM_ENABLED   = bool(os.getenv("TRADING_SIM_ENABLED", "true"))
 
 
-def _send_wa(msg: str, label: str):
-    if REPORT_WA_NUMBER and is_wa_connected():
-        ok = send_whatsapp(REPORT_WA_NUMBER, msg)
-        print(f"[WA] {label}: {'terkirim' if ok else 'GAGAL'}")
+def _notify(msg: str, label: str, subject: str | None = None):
+    if is_notifier_ready():
+        ok = send_notification(msg, subject=subject or label)
+        print(f"[Email] {label}: {'terkirim' if ok else 'GAGAL'}")
     else:
-        print(f"[WA] Skip {label} (WA tidak terhubung).")
+        print(f"[Email] Skip {label} (GMAIL_USER/GMAIL_APP_PASSWORD belum diset).")
 
 
 # ── Bot TikTok ────────────────────────────────────────────
@@ -59,7 +57,7 @@ def job_followup():
     if not TIKTOK_ENABLED:
         return
     from src.bot import run_followups
-    run_followups(WA_NUMBER)
+    run_followups("")
 
 
 # ── Analytics ───────────────────────────────────────────
@@ -75,13 +73,13 @@ def job_collect_analytics():
 def job_daily_report():
     report = generate_daily_report()
     print(report)
-    _send_wa(report, "Laporan harian")
+    _notify(report, "Laporan harian")
 
 
 def job_weekly_report():
     report = generate_weekly_report()
     print(report)
-    _send_wa(report, "Laporan mingguan")
+    _notify(report, "Laporan mingguan")
 
 
 # ── Auto Research ─────────────────────────────────────────
@@ -101,10 +99,10 @@ def job_auto_research():
             f"\U0001f3af Topik pemenang: {winning or '-'}\n"
             f"_Strategi konten minggu depan sudah diperbarui._"
         )
-        _send_wa(msg, "Auto research insights")
+        _notify(msg, "Auto research insights")
     except Exception as e:
         print(f"[AutoResearch] ERROR: {e}")
-        _send_wa(f"⚠️ Auto research gagal: {e}", "Error auto research")
+        _notify(f"⚠️ Auto research gagal: {e}", "Error auto research")
 
 
 # ── Content Generator ────────────────────────────────────────
@@ -115,10 +113,10 @@ def job_generate_content():
         plan = generate_weekly_plan()
         summary = format_plan_for_whatsapp(plan)
         print(summary)
-        _send_wa(summary, "Rencana konten mingguan")
+        _notify(summary, "Rencana konten mingguan")
     except Exception as e:
         print(f"[Content] ERROR: {e}")
-        _send_wa(f"⚠️ Gagal generate konten: {e}", "Error content generator")
+        _notify(f"⚠️ Gagal generate konten: {e}", "Error content generator")
 
 
 def job_daily_content_reminder():
@@ -126,7 +124,7 @@ def job_daily_content_reminder():
     if content:
         msg = format_today_for_whatsapp(content)
         print(msg)
-        _send_wa(msg, "Reminder konten harian")
+        _notify(msg, "Reminder konten harian")
     else:
         print("[Content] Tidak ada konten terjadwal hari ini.")
 
@@ -142,10 +140,10 @@ def job_trading_sim():
         result = run_daily_trading()
         report = format_trading_report(result)
         print(report)
-        _send_wa(report, "Simulasi trading harian")
+        _notify(report, "Simulasi trading harian")
     except Exception as e:
         print(f"[TradingSim] ERROR: {e}")
-        _send_wa(f"⚠️ Simulasi trading gagal: {e}", "Error trading sim")
+        _notify(f"⚠️ Simulasi trading gagal: {e}", "Error trading sim")
 
 
 # ── Stock Screener ───────────────────────────────────────────
@@ -159,10 +157,10 @@ def job_stock_screen():
         results = run_screen()
         report  = format_screen_report(results)
         print(report)
-        _send_wa(report, "Screening saham IDX")
+        _notify(report, "Screening saham IDX")
     except Exception as e:
         print(f"[Screener] ERROR: {e}")
-        _send_wa(f"⚠️ Screener saham gagal: {e}", "Error screener")
+        _notify(f"⚠️ Screener saham gagal: {e}", "Error screener")
 
 
 # ── Video Producer ────────────────────────────────────────────
@@ -176,10 +174,10 @@ def job_produce_video():
         if info:
             msg = format_video_ready_wa(info)
             print(msg)
-            _send_wa(msg, "Video siap upload")
+            _notify(msg, "Video siap upload")
     except Exception as e:
         print(f"[Video] ERROR: {e}")
-        _send_wa(f"⚠️ Seedance error: {e}", "Error video producer")
+        _notify(f"⚠️ Seedance error: {e}", "Error video producer")
 
 
 # ── Main ────────────────────────────────────────────────
@@ -189,7 +187,7 @@ if __name__ == "__main__":
     print("PPBIB Bot mulai...")
     print(f"  TikTok   : {'AKTIF' if TIKTOK_ENABLED else 'NONAKTIF (setup token dulu)'}")
     print(f"  Video AI : {'AKTIF' if VIDEO_ENABLED else 'NONAKTIF (set FAL_KEY untuk aktifkan)'}")
-    print(f"  WA Report: {REPORT_WA_NUMBER or 'BELUM DISET'}")
+    print(f"  Email    : {'AKTIF → ' + os.getenv('NOTIFY_EMAIL','') if is_notifier_ready() else 'BELUM DISET (isi GMAIL_USER, GMAIL_APP_PASSWORD, NOTIFY_EMAIL)'}")
     print("=" * 50)
 
     if not TIKTOK_ENABLED:
@@ -231,8 +229,8 @@ if __name__ == "__main__":
     print("  - Simulasi trading     : Senin-Jumat 09:05 (buka bursa)")
     print("  - Screener saham IDX   : Senin-Jumat 08:30")
     print("  - Snapshot metrics    : tiap hari 19:00")
-    print("  - Laporan harian WA   : tiap hari 20:00")
-    print("  - Laporan mingguan    : Senin 07:00")
+    print("  - Laporan harian email : tiap hari 20:00")
+    print("  - Laporan mingguan     : Senin 07:00")
     print("  - Reminder konten     : tiap hari 07:00")
     print("  - Auto research       : Sabtu 17:00")
     print("  - Generate konten     : Minggu 18:00")
