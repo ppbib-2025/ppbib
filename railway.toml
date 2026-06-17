@@ -1,6 +1,6 @@
 [build]
 builder = "railpack"
-buildCommand = "apt-get install -y ffmpeg || true"
+buildCommand = "apt-get install -y ffmpeg || true && python scripts/download_bgm.py || true"
 
 [deploy]
 startCommand = "python main.py"

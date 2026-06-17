@@ -193,6 +193,13 @@ def job_produce_trending_video():
 # ── Main ────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    # Pastikan BGM tersedia (download otomatis jika belum ada)
+    try:
+        from scripts.download_bgm import ensure_bgm
+        ensure_bgm(min_files=1)
+    except Exception as _e:
+        print(f"[BGM] Skip auto-download: {_e}")
+
     print("=" * 50)
     print("PPBIB Bot mulai...")
     print(f"  TikTok   : {'AKTIF' if TIKTOK_ENABLED else 'NONAKTIF (setup token dulu)'}")
