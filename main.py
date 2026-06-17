@@ -26,9 +26,9 @@ from src.content_generator import (
 from src.auto_research import run_weekly_evaluation
 from src.video_producer import (
     produce_todays_video,
-    format_video_ready_wa,
     produce_trending_video,
-    format_trending_video_wa,
+    format_video_ready_tg,
+    format_trending_video_tg,
 )
 from src.trending_feed_analyzer import analyze_trending_feed, format_trending_feed_wa
 from src.telegram_notifier import send_telegram, is_telegram_configured
@@ -37,7 +37,7 @@ from src.dashboard import app as flask_app
 
 WA_NUMBER       = os.getenv("WHATSAPP_NUMBER", "")
 REPORT_WA_NUMBER = os.getenv("REPORT_WA_NUMBER", WA_NUMBER)
-VIDEO_ENABLED   = bool(os.getenv("FAL_KEY"))
+VIDEO_ENABLED   = bool(os.getenv("WAVESPEED_API_KEY"))
 TIKTOK_ENABLED  = bool(load_token())
 
 
@@ -151,9 +151,9 @@ def job_produce_video():
     try:
         info = produce_todays_video()
         if info:
-            msg = format_video_ready_wa(info)
+            msg = format_video_ready_tg(info)
             print(msg)
-            _send_wa(msg, "Video siap upload")
+            _send_tg(msg, "Video siap upload")
     except Exception as e:
         print(f"[Video] ERROR: {e}")
         _send_wa(f"⚠️ Seedance error: {e}", "Error video producer")
@@ -182,7 +182,7 @@ def job_produce_trending_video():
     try:
         info = produce_trending_video(urgency_filter="HIGH")
         if info:
-            msg = format_trending_video_wa(info)
+            msg = format_trending_video_tg(info)
             print(msg)
             _send_tg(msg, "Trending video siap upload")
     except Exception as e:
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     print("=" * 50)
     print("PPBIB Bot mulai...")
     print(f"  TikTok   : {'AKTIF' if TIKTOK_ENABLED else 'NONAKTIF (setup token dulu)'}")
-    print(f"  Video AI : {'AKTIF' if VIDEO_ENABLED else 'NONAKTIF (set FAL_KEY untuk aktifkan)'}")
+    print(f"  Video AI : {'AKTIF (WaveSpeed)' if VIDEO_ENABLED else 'NONAKTIF (set WAVESPEED_API_KEY untuk aktifkan)'}")
     print(f"  WA Report: {REPORT_WA_NUMBER or 'BELUM DISET'}")
     print("=" * 50)
 

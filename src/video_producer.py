@@ -1,17 +1,17 @@
 """
-Video Producer — pipeline: script → storyboard → Seedance 2.0 → MP4 siap upload.
+Video Producer — pipeline: script → visual prompt → WaveSpeed AI (Wan 2.2) → MP4 siap upload.
 
 Alur:
-  1. Ambil script hari ini dari content_queue.json
-  2. Claude convert script narasi → storyboard 5 shot (Cut scene to...)
-  3. Submit ke Seedance 2.0 via fal.ai
-  4. Download MP4 ke data/videos/
-  5. Kirim notifikasi WA
+  1. Ambil script dari content_queue.json atau trending_feed.json
+  2. Claude convert script narasi → visual prompt untuk Wan 2.2
+  3. Submit ke WaveSpeed AI (Wan 2.2 720p Ultra Fast)
+  4. Poll sampai selesai, download MP4 ke data/videos/
+  5. Kirim notifikasi Telegram
 """
 import os
 from datetime import datetime
 from anthropic import Anthropic
-from src.seedance_api import generate_video, download_video
+from src.wavespeed_api import generate_video, download_video
 from src.content_generator import get_todays_content
 from src.trending_feed_analyzer import get_top_trending_topic
 
@@ -19,40 +19,32 @@ client = Anthropic()
 VIDEO_DIR = "data/videos"
 
 
-def script_to_storyboard(script: str, topic: str, hook: str) -> str:
+def script_to_visual_prompt(script: str, topic: str, hook: str) -> str:
     """
-    Convert script narasi Bahasa Indonesia ke storyboard prompt Inggris
-    format Seedance: deskripsi per shot dipisah 'Cut scene to'.
-
-    Script = apa yang DIUCAPKAN.
-    Storyboard = apa yang TERLIHAT di kamera, shot per shot.
+    Convert script narasi Bahasa Indonesia ke visual prompt Inggris untuk Wan 2.2.
+    Wan 2.2 menerima deskripsi sinematik lengkap dalam 1 prompt, bukan per-shot.
     """
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=400,
+        max_tokens=300,
         messages=[{
             "role": "user",
-            "content": f"""Convert this Indonesian duck farming video script into a 5-shot storyboard prompt for Seedance 2.0 AI video generator.
+            "content": f"""Convert this Indonesian duck farming video script into a cinematic visual prompt for Wan 2.2 AI video generator (text-to-video).
 
 Topic: {topic}
 Hook: {hook}
 Script: {script}
 
 Rules:
-- Write in English only
-- Exactly 5 shots separated by "Cut scene to"
-- Each shot = what the CAMERA SEES, not what is spoken
-- Setting: Indonesian rural duck farm, warm natural lighting
-- Shot structure:
-  Shot 1 (hook visual): attention-grabbing opening scene
-  Shot 2 (problem): show the challenge/pain point
-  Shot 3 (solution): show the process/solution
-  Shot 4 (result): show positive outcome with numbers/proof
-  Shot 5 (CTA): farmer smiling, call-to-action moment
-- Keep each shot description under 25 words
-- NO narration text, NO subtitles in description
+- Write in English only, max 150 words
+- Describe what the CAMERA SEES, not what is spoken
+- Setting: Indonesian rural duck farm, golden hour lighting, lush green surroundings
+- Flow: start with hook visual → show problem/process → show result → end with farmer smiling
+- Include: camera movement (slow pan, close-up, aerial), mood, color palette
+- Style: documentary-style, warm cinematic, authentic UGC feel
+- NO text overlays, NO subtitles in description
 
-Output only the prompt, no explanation:"""
+Output only the visual prompt, no explanation:"""
         }]
     )
     return message.content[0].text.strip()
@@ -63,41 +55,39 @@ def produce_video(video_content: dict) -> dict:
     Generate 1 video dari konten dict.
     Return info lengkap video yang sudah jadi.
     """
-    topic = video_content["topic"]
+    topic  = video_content["topic"]
     script = video_content["script"]
-    hook = video_content["hook"]
+    hook   = video_content["hook"]
 
     print(f"[VideoProducer] Produksi: {topic}")
 
-    # 1. Convert script → storyboard prompt
-    storyboard = script_to_storyboard(script, topic, hook)
-    print(f"[VideoProducer] Storyboard:\n{storyboard}")
+    # 1. Convert script → visual prompt untuk Wan 2.2
+    visual_prompt = script_to_visual_prompt(script, topic, hook)
+    print(f"[VideoProducer] Visual prompt:\n{visual_prompt}")
 
-    # 2. Generate di Seedance 2.0
+    # 2. Generate via WaveSpeed AI (Wan 2.2 720p Ultra Fast)
     video_url = generate_video(
-        storyboard_prompt=storyboard,
-        duration="10",
+        prompt=visual_prompt,
+        duration=5,
         aspect_ratio="9:16",
-        resolution="720p",
-        generate_audio=True,
     )
 
     # 3. Download MP4
-    date_str = datetime.now().strftime("%Y%m%d")
+    date_str   = datetime.now().strftime("%Y%m%d")
     safe_topic = topic[:25].replace(" ", "_").replace("/", "-")
-    save_path = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}.mp4")
+    save_path  = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}.mp4")
     download_video(video_url, save_path)
 
     return {
-        "topic": topic,
-        "hook": hook,
-        "script": script,
-        "caption": video_content.get("caption", ""),
-        "hashtags": video_content.get("hashtags", []),
-        "cta": video_content.get("cta", ""),
-        "storyboard": storyboard,
-        "video_url": video_url,
-        "video_path": save_path,
+        "topic":        topic,
+        "hook":         hook,
+        "script":       script,
+        "caption":      video_content.get("caption", ""),
+        "hashtags":     video_content.get("hashtags", []),
+        "cta":          video_content.get("cta", ""),
+        "visual_prompt": visual_prompt,
+        "video_url":    video_url,
+        "video_path":   save_path,
     }
 
 
@@ -117,7 +107,6 @@ def produce_trending_video(urgency_filter: str = "HIGH") -> dict:
     """
     topic_data = get_top_trending_topic(urgency_filter=urgency_filter)
     if not topic_data:
-        # Fallback: coba tanpa filter jika tidak ada HIGH urgency
         topic_data = get_top_trending_topic()
     if not topic_data:
         print("[VideoProducer] Tidak ada trending topic tersedia.")
@@ -126,14 +115,14 @@ def produce_trending_video(urgency_filter: str = "HIGH") -> dict:
     return produce_video(topic_data)
 
 
-def format_trending_video_wa(info: dict) -> str:
-    """Notifikasi WA khusus untuk video dari trending feed."""
-    hashtag_str = " ".join(info.get("hashtags", []))
-    storyboard_preview = info.get("storyboard", "")[:200] + "..."
+def format_video_ready_tg(info: dict) -> str:
+    """Notifikasi Telegram: video terjadwal siap upload."""
+    hashtag_str    = " ".join(info.get("hashtags", []))
+    prompt_preview = info.get("visual_prompt", "")[:200] + "..."
     lines = [
-        "📈 *Video Trending Siap Upload!*",
+        "✅ *Video Siap Upload!*",
         f"🎬 {info['topic']}",
-        f"📁 File: {info['video_path']}",
+        f"📁 File: `{info['video_path']}`",
         "",
         "─" * 30,
         "*CAPTION (copy-paste):*",
@@ -148,23 +137,22 @@ def format_trending_video_wa(info: dict) -> str:
         info["script"],
         "",
         "─" * 30,
-        "*Storyboard Seedance:*",
-        storyboard_preview,
+        f"*Visual Prompt Wan 2.2:*",
+        prompt_preview,
         "",
-        "_⚡ Konten ini dibuat reaktif terhadap tren hari ini — upload segera!_",
         "_Upload ke TikTok + IG Reels + FB Reels_",
     ]
     return "\n".join(lines)
 
 
-def format_video_ready_wa(info: dict) -> str:
-    """Notifikasi WA: video siap + caption + script lengkap."""
-    hashtag_str = " ".join(info.get("hashtags", []))
-    storyboard_preview = info.get("storyboard", "")[:200] + "..."
+def format_trending_video_tg(info: dict) -> str:
+    """Notifikasi Telegram untuk video dari trending feed."""
+    hashtag_str    = " ".join(info.get("hashtags", []))
+    prompt_preview = info.get("visual_prompt", "")[:200] + "..."
     lines = [
-        "✅ *Video Siap Upload!*",
-        f"\U0001f3ac {info['topic']}",
-        f"\U0001f4c1 File: {info['video_path']}",
+        "📈 *Video Trending Siap Upload!*",
+        f"🎬 {info['topic']}",
+        f"📁 File: `{info['video_path']}`",
         "",
         "─" * 30,
         "*CAPTION (copy-paste):*",
@@ -175,13 +163,19 @@ def format_video_ready_wa(info: dict) -> str:
         "",
         "─" * 30,
         "*SCRIPT voiceover:*",
-        f"\U0001fab4 Hook: {info['hook']}",
+        f"🪄 Hook: {info['hook']}",
         info["script"],
         "",
         "─" * 30,
-        "*Storyboard Seedance:*",
-        storyboard_preview,
+        f"*Visual Prompt Wan 2.2:*",
+        prompt_preview,
         "",
+        "_⚡ Konten reaktif tren hari ini — upload segera!_",
         "_Upload ke TikTok + IG Reels + FB Reels_",
     ]
     return "\n".join(lines)
+
+
+# Backward-compat aliases (dipakai main.py lama)
+format_video_ready_wa    = format_video_ready_tg
+format_trending_video_wa = format_trending_video_tg
