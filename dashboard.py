@@ -381,11 +381,18 @@ def post_data():
         "feeding_rate": _float("feeding_rate"),
         "fcr": _float("fcr"),
         "jumlah_pakan": _float("jumlah_pakan"),
-        "biomassa": _float("biomassa"),
+        "ukuran_rata": _float("ukuran_rata"),
+        "jumlah_ikan": _float("jumlah_ikan"),
         "survival_rate": _float("survival_rate"),
         "padat_tebar": _float("padat_tebar"),
         "catatan": body.get("catatan", ""),
     }
+
+    # Hitung biomassa otomatis dari ukuran rata-rata dan jumlah ikan
+    if entry["ukuran_rata"] and entry["jumlah_ikan"]:
+        entry["biomassa"] = round(entry["ukuran_rata"] * entry["jumlah_ikan"] / 1000, 2)
+    else:
+        entry["biomassa"] = None
 
     result = assess(entry)
     entry["assessment"] = result["overall"]

@@ -283,8 +283,16 @@
             <input type="number" step="0.1" min="0" class="form-control" id="jumlah_pakan" name="jumlah_pakan" placeholder="5.0" />
           </div>
           <div class="col-6">
-            <label class="form-label">Biomassa Ikan (kg)</label>
-            <input type="number" step="1" min="0" class="form-control" id="biomassa" name="biomassa" placeholder="150" />
+            <label class="form-label">Ukuran Rata-rata (gr)</label>
+            <input type="number" step="0.1" min="0" class="form-control" id="ukuran_rata" name="ukuran_rata" placeholder="150" oninput="hitungBiomassa()" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Jumlah Ikan (ekor)</label>
+            <input type="number" step="1" min="0" class="form-control" id="jumlah_ikan" name="jumlah_ikan" placeholder="1000" oninput="hitungBiomassa()" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Biomassa <span class="optional-tag">otomatis (kg)</span></label>
+            <input type="text" class="form-control" id="biomassa_display" placeholder="–" readonly style="color:var(--cyan);background:rgba(0,212,245,.05)!important;" />
           </div>
           <div class="col-6">
             <label class="form-label">Survival Rate (%)</label>
@@ -380,7 +388,8 @@
         ('Kecerahan',     'kecerahan',     'cm',    assessment.grades.kecerahan if assessment else None,     latest.kecerahan if latest else None),
         ('Feeding Rate',  'feeding_rate',  '%',     assessment.grades.feeding_rate if assessment else None,  latest.feeding_rate if latest else None),
         ('FCR',           'fcr',           '',      assessment.grades.fcr if assessment else None,           latest.fcr if latest else None),
-        ('Biomassa',      'biomassa',      'kg',    None,                                                    latest.biomassa if latest else None),
+        ('Ukuran Rata-rata','ukuran_rata',  'gr',    None,                                                    latest.ukuran_rata if latest else None),
+        ('Jumlah Ikan',   'jumlah_ikan',   'ekor',  None,                                                    latest.jumlah_ikan if latest else None),
         ('Survival Rate', 'survival_rate', '%',     assessment.grades.survival_rate if assessment else None, latest.survival_rate if latest else None),
       ] %}
       {% for label, key, unit, grade, val in metrics %}
@@ -464,7 +473,7 @@
             <tr>
               <th>Waktu</th><th>Blok</th><th>Kolam</th><th>Petugas</th>
               <th>pH</th><th>DO</th><th>Suhu</th>
-              <th>FR%</th><th>FCR</th><th>SR%</th>
+              <th>FR%</th><th>FCR</th><th>Ukuran(gr)</th><th>Jml(ekor)</th><th>SR%</th>
               <th>Status</th><th></th>
             </tr>
           </thead>
@@ -608,7 +617,7 @@ function renderTable(entries){
       <td>${f(e.blok)}</td><td>${f(e.kolam)}</td>
       <td>${e.petugas?`<span class="petugas-badge">${e.petugas}</span>`:'–'}</td>
       <td>${f(e.ph)}</td><td>${f(e.do_level)}</td><td>${f(e.suhu)}</td>
-      <td>${f(e.feeding_rate)}</td><td>${f(e.fcr)}</td><td>${f(e.survival_rate)}</td>
+      <td>${f(e.feeding_rate)}</td><td>${f(e.fcr)}</td><td>${f(e.ukuran_rata)}</td><td>${f(e.jumlah_ikan)}</td><td>${f(e.survival_rate)}</td>
       <td><span class="badge-status ${cls}">${st}</span></td>
       <td><button onclick="deleteEntry(${idx})" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:.72rem;" title="Hapus"><i class="fa fa-trash"></i></button></td>
     </tr>`;
@@ -641,7 +650,8 @@ function updateStatus(assessment, entry){
   const metricMap = {
     'metric-ph':entry.ph,'metric-do_level':entry.do_level,'metric-suhu':entry.suhu,
     'metric-kecerahan':entry.kecerahan,'metric-feeding_rate':entry.feeding_rate,
-    'metric-fcr':entry.fcr,'metric-biomassa':entry.biomassa,'metric-survival_rate':entry.survival_rate
+    'metric-fcr':entry.fcr,'metric-ukuran_rata':entry.ukuran_rata,
+    'metric-jumlah_ikan':entry.jumlah_ikan,'metric-survival_rate':entry.survival_rate
   };
   const gradeMap = {
     'metric-ph':'ph','metric-do_level':'do','metric-suhu':'suhu','metric-kecerahan':'kecerahan',
@@ -717,6 +727,18 @@ document.getElementById('dataForm').addEventListener('submit', async function(e)
   }catch(err){ showToast('Gagal: '+err.message,'error'); }
   finally{ btn.disabled=false; btn.innerHTML='<i class="fa fa-paper-plane me-2"></i>Simpan & Analisis'; }
 });
+
+// ── Hitung biomassa otomatis ──────────────────────────────────────────────────
+function hitungBiomassa(){
+  const gr   = parseFloat(document.getElementById('ukuran_rata').value);
+  const ekor = parseFloat(document.getElementById('jumlah_ikan').value);
+  const disp = document.getElementById('biomassa_display');
+  if(gr > 0 && ekor > 0){
+    disp.value = (gr * ekor / 1000).toFixed(2) + ' kg';
+  } else {
+    disp.value = '–';
+  }
+}
 
 // ── Add ikan ─────────────────────────────────────────────────────────────────
 async function addIkan(){
