@@ -9,6 +9,7 @@ import re
 from datetime import datetime, timedelta
 from anthropic import Anthropic
 from src.analytics import _load
+from src.trend_researcher import get_trend_context_for_content
 
 client = Anthropic()
 
@@ -117,8 +118,9 @@ def run_weekly_evaluation() -> dict:
     Loop utama auto research:
     1. Kumpulkan performa konten 7 hari terakhir
     2. Bandingkan dengan rencana konten yang dijalankan
-    3. Minta Claude ekstrak pola pemenang
-    4. Simpan strategi untuk dipakai generate konten minggu depan
+    3. Tambahkan context trend premium terkini
+    4. Minta Claude ekstrak pola pemenang untuk target menengah ke atas
+    5. Simpan strategi untuk dipakai generate konten minggu depan
     Return: dict insights yang disimpan.
     """
     print("[AutoResearch] Memulai evaluasi mingguan...")
@@ -126,6 +128,7 @@ def run_weekly_evaluation() -> dict:
     performance = _get_recent_performance(days=7)
     last_plan = _load_last_week_plan()
     previous = load_strategy_insights()
+    trend_context = get_trend_context_for_content()
 
     perf_lines = []
     if performance["tiktok"]:
@@ -162,17 +165,28 @@ def run_weekly_evaluation() -> dict:
     prev_strategy = previous.get("strategy_prompt", "(belum ada — ini iterasi pertama)")
     prev_iteration = previous.get("iteration", 0)
 
-    prompt = f"""Kamu adalah research analyst untuk PPBIB — brand edukasi peternak itik Indonesia.
-Tugasmu: analisis performa konten minggu ini, ekstrak pola yang bisa direplikasi, buat strategi lebih baik untuk minggu depan.
+    prompt = f"""Kamu adalah research analyst untuk PPBIB — platform investasi dan kemitraan budidaya ikan air tawar komersial Indonesia.
+Target audiens PPBIB: investor dan pengusaha menengah ke atas (modal Rp 50 juta+), bukan peternak kecil.
+Tugasmu: analisis performa konten minggu ini, identifikasi konten mana yang resonan dengan audiens premium,
+buat strategi lebih tajam untuk minggu depan.
 
 PERFORMA KONTEN MINGGU INI:
 {perf_summary}
 
-RENCAN KONTEN YANG DIJALANKAN:
+RENCANA KONTEN YANG DIJALANKAN:
 {plan_summary}
 
 STRATEGI SEBELUMNYA (iterasi {prev_iteration}):
 {prev_strategy}
+
+DATA TREND PREMIUM TERKINI:
+{trend_context}
+
+ANALISIS YANG DIBUTUHKAN:
+- Konten dengan angle bisnis/investasi mana yang paling tinggi engagement-nya?
+- Apakah hook dengan angka ROI/modal/proyeksi lebih perform dibanding hook emosional?
+- Topik trending premium mana yang belum kita angkat dan berpotensi tinggi?
+- Apa yang harus dihindari (konten yang terasa seperti tutorial pemula)?
 
 Return HANYA JSON valid:
 
@@ -180,16 +194,17 @@ Return HANYA JSON valid:
   "iteration": {prev_iteration + 1},
   "week_analyzed": "{datetime.now().strftime('%Y-%m-%d')}",
   "top_performing_patterns": {{
-    "hook_styles": ["pola hook yang berhasil, contoh: 'mulai dengan angka kerugian'"],
+    "hook_styles": ["pola hook yang berhasil untuk audiens premium, contoh: 'mulai dengan angka ROI'"],
     "winning_topics": ["topik dengan engagement tertinggi minggu ini"],
-    "best_formats": ["format konten terbaik: video step-by-step, carousel perbandingan, dll"],
-    "avoid_patterns": ["pola yang underperform minggu ini"]
+    "best_formats": ["format konten terbaik: infografis ROI, video farm tour komersial, dll"],
+    "avoid_patterns": ["pola yang underperform atau tidak sesuai target premium"]
   }},
+  "premium_trend_opportunities": ["topik trending yang relevan untuk target investor/pengusaha minggu depan"],
   "avg_er_tiktok": 0.0,
   "avg_er_instagram": 0.0,
   "avg_er_facebook": 0.0,
-  "strategy_prompt": "Instruksi strategi konten 3-5 kalimat. Spesifik dan actionable: apa yang harus direplikasi, apa yang harus dihindari, format apa yang paling perform berdasarkan data di atas.",
-  "wa_summary": "Ringkasan evaluasi 4-5 baris untuk WhatsApp. Singkat, padat, berisi angka ER dan insight utama."
+  "strategy_prompt": "Instruksi strategi konten 3-5 kalimat untuk target menengah ke atas. Spesifik: angle investasi apa yang harus direplikasi, format mana yang paling perform, topik premium mana yang harus diprioritaskan.",
+  "wa_summary": "Ringkasan evaluasi 4-5 baris untuk WhatsApp. Singkat, padat, berisi angka ER, insight konten premium, dan rekomendasi topik minggu depan."
 }}"""
 
     message = client.messages.create(

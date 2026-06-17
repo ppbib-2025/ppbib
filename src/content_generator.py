@@ -9,6 +9,7 @@ from datetime import datetime
 from anthropic import Anthropic
 from src.analytics import get_top_content
 from src.auto_research import load_strategy_insights
+from src.trend_researcher import get_trend_context_for_content
 
 client = Anthropic()
 
@@ -19,11 +20,14 @@ DAY_MAP = {
     "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu"
 }
 
-BRAND_CONTEXT = """Kamu adalah content strategist untuk PPBIB (Pusat Pengembangan Budidaya Itik dan Bebek).
-PPBIB menjual produk digital (ebook Rp75.000, kalkulator pakan) untuk peternak itik Indonesia.
-Target audiens: peternak itik skala 100-2.000 ekor, usia 25-55 tahun, mayoritas Jawa & Sumatera.
-Tone: praktis, mudah dipahami, seperti mentor berpengalaman — bukan akademis.
-Selalu sertakan angka nyata (Rp, %, kg, ekor) agar konten terasa terpercaya."""
+BRAND_CONTEXT = """Kamu adalah content strategist untuk PPBIB (Pusat Pengembangan Budidaya Ikan Bisnis).
+PPBIB menjual produk konsultasi, laporan kelayakan usaha, dan program kemitraan budidaya ikan air tawar komersial.
+Target audiens: investor dan pengusaha menengah ke atas, usia 30-55 tahun, memiliki modal Rp 50 juta ke atas,
+cari passive income atau diversifikasi bisnis ke sektor agribisnis ikan air tawar (lele, nila, gurame, patin, mas).
+Mereka BUKAN peternak kecil — mereka adalah pebisnis yang mengevaluasi peluang investasi.
+Tone: profesional, data-driven, seperti konsultan bisnis berpengalaman — bukan tutorial pemula.
+Selalu sertakan angka nyata (ROI %, proyeksi Rp/bulan, modal awal, payback period, yield per m²)
+agar konten terasa kredibel dan layak dipertimbangkan sebagai keputusan bisnis."""
 
 
 def _top_content_summary() -> str:
@@ -37,84 +41,105 @@ def _top_content_summary() -> str:
                 title = (t.get("title") or t.get("caption") or t.get("message") or "").strip()[:80]
                 lines.append(f'  - "{title}" (ER: {t["engagement_rate"]}%)')
     return "\n".join(lines) if lines else (
-        "Belum ada data performa. Gunakan topik umum: "
-        "pakan mandiri, FCR, keuntungan ternak itik."
+        "Belum ada data performa. Gunakan topik premium: "
+        "ROI budidaya ikan komersial, perbandingan sistem RAS vs konvensional, "
+        "proyeksi keuntungan kolam 1 hektar, modal masuk budidaya ikan nila/gurame."
     )
 
 
 def generate_weekly_plan() -> dict:
     """
-    Generate rencana konten 1 minggu berdasarkan insight performa.
+    Generate rencana konten 1 minggu berdasarkan insight performa + data trend premium.
     Return dict lengkap: 7 video scripts, 2 carousel, 2 foto.
-    Menyertakan strategi dari auto research jika tersedia.
     """
     top_summary = _top_content_summary()
     strategy = load_strategy_insights()
     strategy_prompt = strategy.get("strategy_prompt", "")
     strategy_iteration = strategy.get("iteration", 0)
+    trend_context = get_trend_context_for_content()
 
     strategy_block = (
         f"STRATEGI AUTO RESEARCH (iterasi #{strategy_iteration}):\n{strategy_prompt}"
         if strategy_prompt
-        else "STRATEGI AUTO RESEARCH: Belum ada data. Gunakan pendekatan umum."
+        else "STRATEGI AUTO RESEARCH: Belum ada data. Gunakan pendekatan premium default."
     )
 
     prompt = f"""{BRAND_CONTEXT}
 
-DATA KONTEN TERBAIK PPBIB (engagement rate tertinggi):
+DATA KONTEN TERBAIK (engagement rate tertinggi):
 {top_summary}
 
 {strategy_block}
 
-Berdasarkan pola konten yang perform dan strategi di atas, buat rencana konten organik 1 minggu
-untuk TikTok, Instagram, dan Facebook.
+{trend_context}
+
+Berdasarkan data di atas, buat rencana konten organik 1 minggu untuk TikTok, Instagram, dan Facebook.
+Semua konten harus menyasar audiens premium — pebisnis dan investor, BUKAN pemula.
+
+KEWAJIBAN FORMAT KONTEN:
+- Setiap konten HARUS mengandung minimal satu dari: angka ROI, proyeksi pendapatan, perbandingan modal,
+  atau data pasar yang bisa dijadikan dasar keputusan bisnis
+- Hook video: mulai dengan angka atau klaim mengejutkan yang relevan bagi investor
+  (contoh: "Farm ikan nila 2.000 m² bisa hasilkan Rp 18 juta/bulan bersih — ini hitungannya")
+- CTA: arahkan ke konsultasi, feasibility study, atau kemitraan PPBIB — bukan ebook murah
+- Hindari kata: pemula, mudah, murah, hemat, rumahan, sampingan
+- Gunakan kata: investasi, ROI, skala komersial, proyeksi, margin, yield, kemitraan
+
+TOPIK PRIORITAS (pilih yang relevan dengan trend di atas):
+- Proyeksi ROI budidaya lele/nila/gurame skala komersial 2026
+- Perbandingan sistem RAS vs bioflok vs konvensional: mana yang lebih bankable?
+- Modal masuk farm ikan 1 hektar: rincian dan payback period
+- Harga jual ikan ke hotel/restoran/supermarket premium vs pasar tradisional
+- Due diligence sebelum investasi di bisnis budidaya ikan
+- Tren ekspor ikan air tawar Indonesia: peluang dan regulasi
+- Kemitraan budidaya ikan: model bagi hasil yang menguntungkan
 
 Return HANYA JSON valid, tidak ada teks lain sebelum atau sesudah JSON:
 
 {{
-  "week_theme": "tema utama minggu ini dalam 1 kalimat",
-  "insight_note": "analisis singkat: pola apa dari konten terbaik yang kita replikasi minggu ini",
+  "week_theme": "tema utama minggu ini dalam 1 kalimat (angle investasi/bisnis)",
+  "insight_note": "analisis singkat: pola konten terbaik yang kita replikasi + angle premium yang digunakan",
   "strategy_iteration": {strategy_iteration},
+  "target_segment": "investor/pengusaha menengah ke atas, modal Rp 50jt+, cari passive income agribisnis",
   "videos": [
     {{
       "day": "Senin",
-      "topic": "judul topik video",
-      "hook": "kalimat pembuka 3 detik yang langsung menarik perhatian",
-      "script": "narasi lengkap 45-60 detik, natural seperti bicara ke peternak",
-      "caption": "caption TikTok/IG/FB max 150 karakter + emoji",
-      "hashtags": ["#itik", "#ternak", "#pakan", "#ppbib", "#budidaya"],
-      "cta": "call to action di akhir video max 1 kalimat"
+      "topic": "judul topik video (angle bisnis/investasi)",
+      "hook": "kalimat pembuka 3 detik — mulai dengan angka atau fakta mengejutkan untuk investor",
+      "script": "narasi 45-60 detik, tone konsultan bisnis berpengalaman, sertakan angka nyata",
+      "caption": "caption max 150 karakter + emoji, tone profesional",
+      "hashtags": ["#budidayaikan", "#investasiagribisnis", "#ppbib", "#bisnisakuakultur"],
+      "cta": "ajakan konsultasi / feasibility study / kemitraan PPBIB"
     }}
   ],
   "carousels": [
     {{
       "day": "Rabu",
       "platform": "Instagram",
-      "topic": "judul carousel",
+      "topic": "judul carousel (angle analisis bisnis/perbandingan)",
       "slides": [
-        {{"num": 1, "heading": "judul slide", "body": "isi 2-3 baris singkat"}},
+        {{"num": 1, "heading": "judul utama dengan angka", "body": "hook data mengejutkan"}},
         {{"num": 2, "heading": "...", "body": "..."}},
         {{"num": 3, "heading": "...", "body": "..."}},
         {{"num": 4, "heading": "...", "body": "..."}},
-        {{"num": 5, "heading": "Kesimpulan + CTA", "body": "ajakan ambil ebook/kalkulator PPBIB"}}
+        {{"num": 5, "heading": "Tertarik?", "body": "CTA ke konsultasi/kemitraan PPBIB"}}
       ],
-      "caption": "caption post",
-      "hashtags": ["#itik", "#ppbib"]
+      "caption": "caption post dengan angka kunci",
+      "hashtags": ["#investasiikan", "#ppbib", "#akuakultur"]
     }}
   ],
   "photos": [
     {{
       "day": "Jumat",
       "platform": "Instagram",
-      "concept": "deskripsi visual detail: warna, elemen, angka/data yang ditampilkan, ukuran",
-      "caption": "caption lengkap dengan angka dan fakta nyata",
-      "hashtags": ["#itik", "#infografis", "#ppbib"]
+      "concept": "deskripsi visual: infografis/data visual, warna profesional, tabel/angka proyeksi keuangan",
+      "caption": "caption dengan proyeksi angka nyata dan CTA bisnis",
+      "hashtags": ["#investasiagribisnis", "#budidayaikankomersial", "#ppbib"]
     }}
   ]
 }}
 
-Buat: 7 video (Senin-Minggu), 2 carousel (hari berbeda), 2 foto (hari berbeda).
-Semua Bahasa Indonesia. Topik: pakan mandiri, FCR, keuntungan ternak, tips budidaya, atau promo produk PPBIB."""
+Buat: 7 video (Senin-Minggu), 2 carousel, 2 foto. Semua Bahasa Indonesia."""
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
@@ -147,7 +172,7 @@ def _append_queue(plan: dict):
 
 
 def format_plan_for_whatsapp(plan: dict) -> str:
-    """Ringkasan rencana konten untuk WA. Detail lengkap ada di JSON."""
+    """Ringkasan rencana konten untuk WA."""
     iteration = plan.get("strategy_iteration", 0)
     iter_note = f" _(strategi iterasi #{iteration})_" if iteration else ""
     lines = [
@@ -155,6 +180,7 @@ def format_plan_for_whatsapp(plan: dict) -> str:
         f"\U0001f4c5 Pekan {plan.get('week_of', '')}{iter_note}",
         f"\U0001f3af Tema: *{plan.get('week_theme', '')}*",
         f"\U0001f4a1 {plan.get('insight_note', '')}",
+        f"\U0001f3af Segmen: _{plan.get('target_segment', 'investor/pengusaha menengah ke atas')}_",
         "─" * 30, "",
         "*\U0001f4f9 VIDEO HARIAN:*",
     ]
