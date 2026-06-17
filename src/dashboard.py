@@ -69,7 +69,7 @@ def _do_refresh():
 @app.route("/")
 def home():
     from src.notifier import is_notifier_ready, NOTIFY_EMAIL
-    email_status = f"✅ Gmail siap → {NOTIFY_EMAIL}" if is_notifier_ready() else "❌ Gmail belum diset (isi GMAIL_USER, GMAIL_APP_PASSWORD, NOTIFY_EMAIL)"
+    email_status = f"✅ Resend siap → {NOTIFY_EMAIL}" if is_notifier_ready() else "❌ Belum diset (isi RESEND_API_KEY + NOTIFY_EMAIL di Railway Variables)"
     return (
         "<h3 style='font-family:sans-serif;padding:20px'>PPBIB Bot aktif ✅</h3>"
         f"<p style='font-family:sans-serif;padding:0 20px'>Email: {email_status}</p>"
@@ -81,13 +81,12 @@ def home():
 
 @app.route("/test-email")
 def test_email():
-    from src.notifier import _send, is_notifier_ready, NOTIFY_EMAIL, GMAIL_USER, GMAIL_PASSWORD
+    from src.notifier import _send, is_notifier_ready, NOTIFY_EMAIL, RESEND_API_KEY
     if not is_notifier_ready():
         return jsonify({
             "ok": False,
-            "error": "GMAIL_USER / GMAIL_APP_PASSWORD / NOTIFY_EMAIL belum diset di Railway Variables",
-            "gmail_user_set": bool(GMAIL_USER),
-            "app_password_set": bool(GMAIL_PASSWORD),
+            "error": "RESEND_API_KEY / NOTIFY_EMAIL belum diset di Railway Variables",
+            "resend_key_set": bool(RESEND_API_KEY),
             "notify_email_set": bool(NOTIFY_EMAIL),
         }), 400
 
@@ -104,7 +103,7 @@ def test_email():
     if err is None:
         return jsonify({"ok": True, "message": f"Email terkirim ke {NOTIFY_EMAIL}"}), 200
     else:
-        return jsonify({"ok": False, "error": err, "gmail_user": GMAIL_USER, "notify_email": NOTIFY_EMAIL}), 500
+        return jsonify({"ok": False, "error": err, "notify_email": NOTIFY_EMAIL}), 500
 
 
 @app.route("/analytics/refresh")
