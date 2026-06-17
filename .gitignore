@@ -4,3 +4,12 @@ data/tokens/
 __pycache__/
 *.pyc
 .venv/
+# Clip video lokal — jangan commit ke git (file besar)
+assets/clips/*.mp4
+assets/clips/*.mov
+assets/clips/*.MP4
+assets/clips/*.MOV
+# Video & audio output
+data/videos/*.mp4
+data/audio/*.mp3
+data/audio/*.srt

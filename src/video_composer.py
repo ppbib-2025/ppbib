@@ -1,13 +1,19 @@
 """
 Video Composer — gabungkan semua komponen jadi 1 MP4 siap upload via FFmpeg.
 
-Pipeline:
-  raw_video.mp4 (visual SiliconFlow)
+Pipeline (mode AI):
+  raw_video.mp4 (visual SiliconFlow Wan 2.2)
   + voiceover.mp3 (edge-tts Ardi)
   + subtitle.srt  (edge-tts SubMaker, timing otomatis sinkron)
   + bgm.mp3       (dari assets/music/, volume 20%, di-loop)
   ──────────────────────────────────────────────────────────
   final_video.mp4 (siap upload TikTok / IG Reels / FB Reels)
+
+Pipeline (mode lokal):
+  clip.mp4 (footage dari assets/clips/ — rekaman kandang bebek, dll.)
+  + voiceover.mp3 + subtitle.srt + bgm.mp3
+  ──────────────────────────────────────────────────────────
+  final_video.mp4
 
 Butuh: ffmpeg dengan libass (untuk burn subtitle).
 Railway: tambahkan "ffmpeg" di nixpacks.toml atau railpack config.
@@ -19,6 +25,13 @@ import subprocess
 
 OUTPUT_DIR = "data/videos"
 
+# Lokasi clip video lokal (footage bebek, kandang, dll.)
+_CLIP_SEARCH_DIRS = [
+    "assets/clips",
+    "data/clips",
+    "clips",
+]
+
 # Lokasi pencarian BGM — cek semua folder, yang mana ada mp3-nya dipakai
 _MUSIC_SEARCH_DIRS = [
     ".",              # root folder ppbib (taruh langsung di sini)
@@ -26,6 +39,32 @@ _MUSIC_SEARCH_DIRS = [
     "data/music",
     "music",
 ]
+
+
+def get_local_clip() -> str | None:
+    """
+    Cari clip video lokal (.mp4 / .mov) di assets/clips/ atau folder lain.
+    Return path file yang dipilih secara acak, atau None jika tidak ada.
+    """
+    files = []
+    for d in _CLIP_SEARCH_DIRS:
+        if os.path.isdir(d):
+            files += glob.glob(os.path.join(d, "*.mp4"))
+            files += glob.glob(os.path.join(d, "*.mov"))
+            files += glob.glob(os.path.join(d, "*.MP4"))
+            files += glob.glob(os.path.join(d, "*.MOV"))
+    # Filter file terlalu kecil (< 100KB) agar tidak ambil placeholder
+    files = [f for f in files if os.path.getsize(f) > 100 * 1024]
+    if not files:
+        return None
+    chosen = random.choice(files)
+    print(f"[Composer] Clip lokal: {os.path.basename(chosen)}")
+    return chosen
+
+
+def has_local_clips() -> bool:
+    """Cek apakah ada clip video lokal yang tersedia."""
+    return get_local_clip() is not None
 
 
 def get_random_bgm() -> str | None:

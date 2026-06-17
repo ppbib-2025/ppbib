@@ -37,7 +37,12 @@ from src.dashboard import app as flask_app
 
 WA_NUMBER       = os.getenv("WHATSAPP_NUMBER", "")
 REPORT_WA_NUMBER = os.getenv("REPORT_WA_NUMBER", WA_NUMBER)
-VIDEO_ENABLED   = bool(os.getenv("SILICONFLOW_API_KEY"))
+_SF_KEY         = bool(os.getenv("SILICONFLOW_API_KEY"))
+try:
+    from src.video_composer import has_local_clips as _has_clips
+    VIDEO_ENABLED = _SF_KEY or _has_clips()
+except Exception:
+    VIDEO_ENABLED = _SF_KEY
 TIKTOK_ENABLED  = bool(load_token())
 
 
@@ -214,7 +219,8 @@ if __name__ == "__main__":
     print("=" * 50)
     print("PPBIB Bot mulai...")
     print(f"  TikTok   : {'AKTIF' if TIKTOK_ENABLED else 'NONAKTIF (setup token dulu)'}")
-    print(f"  Video AI : {'AKTIF (SiliconFlow)' if VIDEO_ENABLED else 'NONAKTIF (set SILICONFLOW_API_KEY untuk aktifkan)'}")
+    _video_mode = "AI (SiliconFlow Wan 2.2)" if _SF_KEY else ("Clip Lokal (assets/clips/)" if VIDEO_ENABLED else "NONAKTIF")
+    print(f"  Video    : {_video_mode if VIDEO_ENABLED else 'NONAKTIF — set SILICONFLOW_API_KEY atau taruh clip di assets/clips/'}")
     print(f"  WA Report: {REPORT_WA_NUMBER or 'BELUM DISET'}")
     print("=" * 50)
 

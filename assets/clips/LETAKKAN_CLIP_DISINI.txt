@@ -1,0 +1,17 @@
+Taruh file video clip (.mp4 / .mov) di folder ini.
+
+Contoh isi yang bagus:
+- Rekaman kandang bebek dari berbagai sudut
+- Close-up bebek makan / minum
+- Proses panen telur
+- Bebek di kolam / sawah
+- Peternak sedang kerja
+
+Tips:
+- Durasi ideal per clip: 5–30 detik
+- Resolusi minimal: 720p (vertikal 9:16 lebih bagus untuk TikTok/Reels)
+- Format: MP4 atau MOV
+- Bot akan pilih secara ACAK setiap kali generate video
+- Makin banyak clip, makin variatif kontennya
+
+Tanpa SILICONFLOW_API_KEY → bot otomatis pakai clip dari folder ini.
