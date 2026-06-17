@@ -1,10 +1,18 @@
 """
 Health check harian — cek semua API token & koneksi kritis.
-Kirim notif WhatsApp jika ada yang bermasalah.
+Kirim laporan via email setiap hari jam 09:00.
+
+Env vars yang dibutuhkan:
+  HEALTH_CHECK_EMAIL_TO   — alamat tujuan (contoh: admin@gmail.com)
+  HEALTH_CHECK_EMAIL_FROM — akun Gmail pengirim
+  HEALTH_CHECK_EMAIL_PASS — App Password Gmail (bukan password biasa)
 """
 import os
+import smtplib
 import requests
 from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -117,36 +125,120 @@ CHECKS = [
     ("Env Variables",       _check_env_vars),
 ]
 
-_ICON = {"OK": "✅", "WARN": "⚠️", "ERROR": "❌"}
+_ICON    = {"OK": "✅", "WARN": "⚠️", "ERROR": "❌"}
+_ICON_H  = {"OK": "✅", "WARN": "⚠️", "ERROR": "❌"}  # sama, tapi HTML pakai tabel
+_ROW_CLR = {"OK": "#d4edda", "WARN": "#fff3cd", "ERROR": "#f8d7da"}
 
 
-def run_health_check() -> str:
-    now = datetime.now().strftime("%d %b %Y %H:%M")
-    lines = [f"🏥 *Health Check PPBIB*\n_{now}_\n"]
-
-    errors, warnings = [], []
-
+def _build_report() -> tuple[list, list, list]:
+    """Return (rows, errors, warnings). rows = list of (name, status, msg)."""
+    rows, errors, warnings = [], [], []
     for name, fn in CHECKS:
         result = fn()
-        icon = _ICON.get(result["status"], "❓")
-        lines.append(f"{icon} *{name}*: {result['msg']}")
+        rows.append((name, result["status"], result["msg"]))
         if result["status"] == "ERROR":
             errors.append(name)
         elif result["status"] == "WARN":
             warnings.append(name)
+    return rows, errors, warnings
 
+
+def _plain_text(rows: list, errors: list, warnings: list) -> str:
+    now = datetime.now().strftime("%d %b %Y %H:%M")
+    lines = [f"Health Check PPBIB — {now}\n"]
+    for name, status, msg in rows:
+        icon = _ICON.get(status, "?")
+        lines.append(f"{icon} {name}: {msg}")
     lines.append("")
     if errors:
-        lines.append(f"🚨 *{len(errors)} masalah kritis* perlu ditangani:")
-        for e in errors:
-            lines.append(f"  • {e}")
+        lines.append(f"KRITIS ({len(errors)}): {', '.join(errors)}")
     elif warnings:
-        lines.append(f"⚠️ *{len(warnings)} peringatan* (tidak mengganggu operasi):")
-        for w in warnings:
-            lines.append(f"  • {w}")
+        lines.append(f"Peringatan ({len(warnings)}): {', '.join(warnings)}")
     else:
-        lines.append("✨ Semua sistem berjalan normal!")
+        lines.append("Semua sistem berjalan normal.")
+    return "\n".join(lines)
 
-    report = "\n".join(lines)
-    print(report)
-    return report
+
+def _html(rows: list, errors: list, warnings: list) -> str:
+    now = datetime.now().strftime("%d %b %Y %H:%M")
+    if errors:
+        summary_bg, summary_txt = "#f8d7da", f"🚨 {len(errors)} masalah kritis: {', '.join(errors)}"
+    elif warnings:
+        summary_bg, summary_txt = "#fff3cd", f"⚠️ {len(warnings)} peringatan: {', '.join(warnings)}"
+    else:
+        summary_bg, summary_txt = "#d4edda", "✨ Semua sistem berjalan normal!"
+
+    rows_html = ""
+    for name, status, msg in rows:
+        bg = _ROW_CLR.get(status, "#fff")
+        icon = _ICON_H.get(status, "?")
+        rows_html += f"""
+        <tr style="background:{bg}">
+          <td style="padding:8px 12px;font-weight:bold">{icon} {name}</td>
+          <td style="padding:8px 12px">{msg}</td>
+        </tr>"""
+
+    return f"""
+    <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
+      <h2 style="color:#333">🏥 Health Check PPBIB</h2>
+      <p style="color:#666;margin-top:-10px">{now}</p>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #dee2e6">
+        <thead>
+          <tr style="background:#343a40;color:#fff">
+            <th style="padding:8px 12px;text-align:left">Layanan</th>
+            <th style="padding:8px 12px;text-align:left">Status</th>
+          </tr>
+        </thead>
+        <tbody>{rows_html}
+        </tbody>
+      </table>
+      <p style="margin-top:16px;padding:10px;background:{summary_bg};border-radius:4px">
+        {summary_txt}
+      </p>
+      <p style="color:#999;font-size:12px">PPBIB Automation System</p>
+    </body></html>
+    """
+
+
+def send_health_check_email(plain: str, html: str, errors: list, warnings: list) -> bool:
+    to_addr   = os.getenv("HEALTH_CHECK_EMAIL_TO")
+    from_addr = os.getenv("HEALTH_CHECK_EMAIL_FROM")
+    password  = os.getenv("HEALTH_CHECK_EMAIL_PASS")
+
+    if not all([to_addr, from_addr, password]):
+        print("[HealthCheck] Email tidak terkirim — set HEALTH_CHECK_EMAIL_TO/FROM/PASS di .env")
+        return False
+
+    if errors:
+        subject = f"🚨 [PPBIB] Health Check — {len(errors)} masalah kritis!"
+    elif warnings:
+        subject = f"⚠️ [PPBIB] Health Check — {len(warnings)} peringatan"
+    else:
+        subject = "✅ [PPBIB] Health Check — Semua sistem normal"
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"]    = from_addr
+    msg["To"]      = to_addr
+    msg.attach(MIMEText(plain, "plain", "utf-8"))
+    msg.attach(MIMEText(html,  "html",  "utf-8"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+            server.login(from_addr, password)
+            server.sendmail(from_addr, to_addr, msg.as_string())
+        print(f"[HealthCheck] Email terkirim ke {to_addr}")
+        return True
+    except Exception as e:
+        print(f"[HealthCheck] Gagal kirim email: {e}")
+        return False
+
+
+def run_health_check() -> str:
+    rows, errors, warnings = _build_report()
+    plain = _plain_text(rows, errors, warnings)
+    html  = _html(rows, errors, warnings)
+
+    print(plain)
+    send_health_check_email(plain, html, errors, warnings)
+    return plain

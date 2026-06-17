@@ -132,8 +132,7 @@ def job_daily_content_reminder():
 
 def job_health_check():
     print("[HealthCheck] Cek semua API dan koneksi...")
-    report = run_health_check()
-    _send_wa(report, "Health check harian")
+    run_health_check()  # kirim via email — lihat HEALTH_CHECK_EMAIL_* di .env
 
 
 # ── Video Producer ────────────────────────────────────────────
