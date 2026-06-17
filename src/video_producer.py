@@ -12,6 +12,8 @@ import os
 from datetime import datetime
 from anthropic import Anthropic
 from src.siliconflow_api import generate_video, download_video
+from src.tts_engine import generate_tts
+from src.video_composer import compose_video_audio, ffmpeg_available
 from src.content_generator import get_todays_content
 from src.trending_feed_analyzer import get_top_trending_topic
 
@@ -72,22 +74,38 @@ def produce_video(video_content: dict) -> dict:
         image_size="720x1280",
     )
 
-    # 3. Download MP4
+    # 3. Download raw video MP4 (visual only)
     date_str   = datetime.now().strftime("%Y%m%d")
     safe_topic = topic[:25].replace(" ", "_").replace("/", "-")
-    save_path  = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}.mp4")
-    download_video(video_url, save_path)
+    raw_path   = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}_raw.mp4")
+    download_video(video_url, raw_path)
+
+    # 4. Generate TTS voiceover dari script narasi
+    tts_text  = f"{hook}. {script}"
+    audio_dir = "data/audio"
+    audio_path = os.path.join(audio_dir, f"{date_str}_{safe_topic}.mp3")
+    generate_tts(tts_text, output_path=audio_path)
+
+    # 5. Gabungkan video + voiceover (butuh ffmpeg)
+    if ffmpeg_available():
+        final_path = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}.mp4")
+        compose_video_audio(raw_path, audio_path, final_path)
+        os.remove(raw_path)   # hapus raw setelah compose
+    else:
+        print("[VideoProducer] ffmpeg tidak tersedia — video tanpa voiceover.")
+        final_path = raw_path
 
     return {
-        "topic":        topic,
-        "hook":         hook,
-        "script":       script,
-        "caption":      video_content.get("caption", ""),
-        "hashtags":     video_content.get("hashtags", []),
-        "cta":          video_content.get("cta", ""),
+        "topic":         topic,
+        "hook":          hook,
+        "script":        script,
+        "caption":       video_content.get("caption", ""),
+        "hashtags":      video_content.get("hashtags", []),
+        "cta":           video_content.get("cta", ""),
         "visual_prompt": visual_prompt,
-        "video_url":    video_url,
-        "video_path":   save_path,
+        "video_url":     video_url,
+        "audio_path":    audio_path,
+        "video_path":    final_path,
     }
 
 
