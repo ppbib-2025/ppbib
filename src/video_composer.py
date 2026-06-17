@@ -18,15 +18,29 @@ import random
 import subprocess
 
 OUTPUT_DIR = "data/videos"
-MUSIC_DIR  = "assets/music"
+
+# Lokasi pencarian BGM — cek semua folder, yang mana ada mp3-nya dipakai
+_MUSIC_SEARCH_DIRS = [
+    ".",              # root folder ppbib (taruh langsung di sini)
+    "assets/music",
+    "data/music",
+    "music",
+]
 
 
 def get_random_bgm() -> str | None:
-    """Ambil file BGM secara acak dari assets/music/. Return None jika kosong."""
-    if not os.path.isdir(MUSIC_DIR):
-        return None
-    files = glob.glob(os.path.join(MUSIC_DIR, "*.mp3")) + \
-            glob.glob(os.path.join(MUSIC_DIR, "*.m4a"))
+    """
+    Cari file BGM (.mp3 / .m4a) di beberapa lokasi.
+    Bisa taruh langsung di folder ppbib atau di subfolder manapun.
+    Return path file yang dipilih secara acak, atau None jika tidak ada.
+    """
+    files = []
+    for d in _MUSIC_SEARCH_DIRS:
+        if os.path.isdir(d):
+            files += glob.glob(os.path.join(d, "*.mp3"))
+            files += glob.glob(os.path.join(d, "*.m4a"))
+    # Exclude file yang terlalu kecil (< 50KB) agar tidak salah ambil file lain
+    files = [f for f in files if os.path.getsize(f) > 50 * 1024]
     return random.choice(files) if files else None
 
 
