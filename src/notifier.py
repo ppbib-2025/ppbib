@@ -91,7 +91,10 @@ def _send(message: str, subject: str | None = None) -> str | None:
     msg.attach(MIMEText(message, "plain", "utf-8"))
     msg.attach(MIMEText(html,    "html",  "utf-8"))
 
-    # Coba port 587 (STARTTLS) — lebih banyak cloud provider yang izinkan
+    err587 = None
+    err465 = None
+
+    # Coba port 587 (STARTTLS)
     try:
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
             server.ehlo()
@@ -100,8 +103,9 @@ def _send(message: str, subject: str | None = None) -> str | None:
             server.sendmail(GMAIL_USER, NOTIFY_EMAIL, msg.as_string())
         print(f"[Notifier] Email terkirim ke {NOTIFY_EMAIL} (port 587)")
         return None
-    except Exception as e587:
-        print(f"[Notifier] Port 587 gagal: {e587}")
+    except Exception as e:
+        err587 = str(e)
+        print(f"[Notifier] Port 587 gagal: {err587}")
 
     # Fallback port 465 (SSL)
     try:
@@ -110,10 +114,12 @@ def _send(message: str, subject: str | None = None) -> str | None:
             server.sendmail(GMAIL_USER, NOTIFY_EMAIL, msg.as_string())
         print(f"[Notifier] Email terkirim ke {NOTIFY_EMAIL} (port 465)")
         return None
-    except Exception as e465:
-        err = f"Port587: {e587} | Port465: {e465}"
-        print(f"[Notifier] Semua port gagal: {err}")
-        return err
+    except Exception as e:
+        err465 = str(e)
+        print(f"[Notifier] Port 465 gagal: {err465}")
+
+    err = f"Port587: {err587} | Port465: {err465}"
+    return err
 
 
 def is_notifier_ready() -> bool:
