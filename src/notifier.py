@@ -67,16 +67,19 @@ def _extract_subject(text: str) -> str:
 
 
 def send_notification(message: str, subject: str | None = None) -> bool:
+    """Kirim notifikasi ke NOTIFY_EMAIL via Gmail SMTP. Return True jika berhasil."""
+    err = _send(message, subject)
+    return err is None
+
+
+def _send(message: str, subject: str | None = None) -> str | None:
     """
-    Kirim notifikasi ke NOTIFY_EMAIL via Gmail SMTP.
-    Return True jika berhasil.
+    Kirim email. Return None jika sukses, string error jika gagal.
     """
     if not GMAIL_USER or not GMAIL_PASSWORD:
-        print("[Notifier] GMAIL_USER / GMAIL_APP_PASSWORD belum diset di .env")
-        return False
+        return "GMAIL_USER / GMAIL_APP_PASSWORD belum diset"
     if not NOTIFY_EMAIL:
-        print("[Notifier] NOTIFY_EMAIL belum diset di .env")
-        return False
+        return "NOTIFY_EMAIL belum diset"
 
     subj = subject or _extract_subject(message)
     html = _markdown_to_html(message)
@@ -92,13 +95,16 @@ def send_notification(message: str, subject: str | None = None) -> bool:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
             server.login(GMAIL_USER, GMAIL_PASSWORD)
             server.sendmail(GMAIL_USER, NOTIFY_EMAIL, msg.as_string())
-        return True
-    except smtplib.SMTPAuthenticationError:
-        print("[Notifier] Auth gagal — pastikan App Password benar dan 2FA aktif")
-        return False
+        print(f"[Notifier] Email terkirim ke {NOTIFY_EMAIL}")
+        return None
+    except smtplib.SMTPAuthenticationError as e:
+        err = f"SMTPAuthenticationError: {e}"
+        print(f"[Notifier] {err}")
+        return err
     except Exception as e:
-        print(f"[Notifier] Gagal kirim email: {e}")
-        return False
+        err = f"{type(e).__name__}: {e}"
+        print(f"[Notifier] {err}")
+        return err
 
 
 def is_notifier_ready() -> bool:

@@ -81,11 +81,14 @@ def home():
 
 @app.route("/test-email")
 def test_email():
-    from src.notifier import send_notification, is_notifier_ready, NOTIFY_EMAIL
+    from src.notifier import _send, is_notifier_ready, NOTIFY_EMAIL, GMAIL_USER, GMAIL_PASSWORD
     if not is_notifier_ready():
         return jsonify({
             "ok": False,
-            "error": "GMAIL_USER / GMAIL_APP_PASSWORD / NOTIFY_EMAIL belum diset di Railway Variables"
+            "error": "GMAIL_USER / GMAIL_APP_PASSWORD / NOTIFY_EMAIL belum diset di Railway Variables",
+            "gmail_user_set": bool(GMAIL_USER),
+            "app_password_set": bool(GMAIL_PASSWORD),
+            "notify_email_set": bool(NOTIFY_EMAIL),
         }), 400
 
     msg = (
@@ -97,11 +100,11 @@ def test_email():
         "  • Laporan analytics setiap hari 20:00\n\n"
         f"_Dikirim pada: {datetime.now().strftime('%d %b %Y %H:%M:%S')}_"
     )
-    ok = send_notification(msg, subject="✅ Test Email PPBIB — Berhasil!")
-    if ok:
+    err = _send(msg, subject="✅ Test Email PPBIB — Berhasil!")
+    if err is None:
         return jsonify({"ok": True, "message": f"Email terkirim ke {NOTIFY_EMAIL}"}), 200
     else:
-        return jsonify({"ok": False, "error": "Gagal kirim — cek GMAIL_APP_PASSWORD"}), 500
+        return jsonify({"ok": False, "error": err, "gmail_user": GMAIL_USER, "notify_email": NOTIFY_EMAIL}), 500
 
 
 @app.route("/analytics/refresh")
