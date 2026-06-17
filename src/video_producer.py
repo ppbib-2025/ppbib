@@ -13,6 +13,7 @@ from datetime import datetime
 from anthropic import Anthropic
 from src.seedance_api import generate_video, download_video
 from src.content_generator import get_todays_content
+from src.trending_feed_analyzer import get_top_trending_topic
 
 client = Anthropic()
 VIDEO_DIR = "data/videos"
@@ -107,6 +108,53 @@ def produce_todays_video() -> dict:
         print("[VideoProducer] Tidak ada video terjadwal hari ini.")
         return {}
     return produce_video(content["video"])
+
+
+def produce_trending_video(urgency_filter: str = "HIGH") -> dict:
+    """
+    Produksi video berdasarkan topik trending dari trending_feed_analyzer.
+    Ambil topik dengan urgency tertinggi (default HIGH) dari feed terbaru.
+    """
+    topic_data = get_top_trending_topic(urgency_filter=urgency_filter)
+    if not topic_data:
+        # Fallback: coba tanpa filter jika tidak ada HIGH urgency
+        topic_data = get_top_trending_topic()
+    if not topic_data:
+        print("[VideoProducer] Tidak ada trending topic tersedia.")
+        return {}
+    print(f"[VideoProducer] Trending video: [{topic_data.get('urgency')}] {topic_data['topic']}")
+    return produce_video(topic_data)
+
+
+def format_trending_video_wa(info: dict) -> str:
+    """Notifikasi WA khusus untuk video dari trending feed."""
+    hashtag_str = " ".join(info.get("hashtags", []))
+    storyboard_preview = info.get("storyboard", "")[:200] + "..."
+    lines = [
+        "📈 *Video Trending Siap Upload!*",
+        f"🎬 {info['topic']}",
+        f"📁 File: {info['video_path']}",
+        "",
+        "─" * 30,
+        "*CAPTION (copy-paste):*",
+        info["caption"],
+        "",
+        hashtag_str,
+        f"*CTA:* {info['cta']}",
+        "",
+        "─" * 30,
+        "*SCRIPT voiceover:*",
+        f"🪄 Hook: {info['hook']}",
+        info["script"],
+        "",
+        "─" * 30,
+        "*Storyboard Seedance:*",
+        storyboard_preview,
+        "",
+        "_⚡ Konten ini dibuat reaktif terhadap tren hari ini — upload segera!_",
+        "_Upload ke TikTok + IG Reels + FB Reels_",
+    ]
+    return "\n".join(lines)
 
 
 def format_video_ready_wa(info: dict) -> str:

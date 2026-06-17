@@ -24,7 +24,13 @@ from src.content_generator import (
     format_today_for_whatsapp,
 )
 from src.auto_research import run_weekly_evaluation
-from src.video_producer import produce_todays_video, format_video_ready_wa
+from src.video_producer import (
+    produce_todays_video,
+    format_video_ready_wa,
+    produce_trending_video,
+    format_trending_video_wa,
+)
+from src.trending_feed_analyzer import analyze_trending_feed, format_trending_feed_wa
 from src.whatsapp import send_whatsapp, is_wa_connected
 from src.dashboard import app as flask_app
 
@@ -144,6 +150,37 @@ def job_produce_video():
         _send_wa(f"⚠️ Seedance error: {e}", "Error video producer")
 
 
+# ── Trending Feed + Video ────────────────────────────────
+
+def job_analyze_trending_feed():
+    """Tiap hari 10:00 — ambil sinyal tren & simpan ke trending_feed.json."""
+    print("[TrendingFeed] Menganalisis tren konten hari ini...")
+    try:
+        feed = analyze_trending_feed()
+        msg = format_trending_feed_wa(feed)
+        print(msg)
+        _send_wa(msg, "Trending feed harian")
+    except Exception as e:
+        print(f"[TrendingFeed] ERROR: {e}")
+        _send_wa(f"⚠️ Trending feed gagal: {e}", "Error trending feed")
+
+
+def job_produce_trending_video():
+    """Tiap hari 11:00 — produksi 1 video reaktif berdasarkan trending feed."""
+    if not VIDEO_ENABLED:
+        return
+    print("[TrendingVideo] Produksi video trending via Seedance...")
+    try:
+        info = produce_trending_video(urgency_filter="HIGH")
+        if info:
+            msg = format_trending_video_wa(info)
+            print(msg)
+            _send_wa(msg, "Trending video siap upload")
+    except Exception as e:
+        print(f"[TrendingVideo] ERROR: {e}")
+        _send_wa(f"⚠️ Trending video error: {e}", "Error trending video")
+
+
 # ── Main ────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -182,6 +219,8 @@ if __name__ == "__main__":
     scheduler.add_job(job_auto_research,          "cron", day_of_week="sat", hour=17, minute=0, id="auto_research")
     scheduler.add_job(job_generate_content,       "cron", day_of_week="sun", hour=18, minute=0, id="content_generate")
     scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                    id="video_produce")
+    scheduler.add_job(job_analyze_trending_feed,  "cron", hour=10, minute=0,                    id="trending_feed")
+    scheduler.add_job(job_produce_trending_video, "cron", hour=11, minute=0,                    id="trending_video")
 
     print("Scheduler aktif:")
     print("  - Snapshot metrics    : tiap hari 19:00")
@@ -194,6 +233,9 @@ if __name__ == "__main__":
         print("  - Scan komentar TikTok: tiap 15 menit")
     if VIDEO_ENABLED:
         print("  - Produksi video      : tiap hari 08:00")
+    print("  - Analisis tren feed  : tiap hari 10:00")
+    if VIDEO_ENABLED:
+        print("  - Video trending      : tiap hari 11:00")
     print()
     print("Bot berjalan... (Ctrl+C untuk berhenti)")
     scheduler.start()
