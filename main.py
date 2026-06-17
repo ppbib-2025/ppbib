@@ -26,6 +26,7 @@ from src.content_generator import (
 from src.auto_research import run_weekly_evaluation
 from src.video_producer import produce_todays_video, format_video_ready_wa
 from src.whatsapp import send_whatsapp, is_wa_connected
+from src.health_check import run_health_check
 from src.dashboard import app as flask_app
 
 WA_NUMBER       = os.getenv("WHATSAPP_NUMBER", "")
@@ -127,6 +128,14 @@ def job_daily_content_reminder():
         print("[Content] Tidak ada konten terjadwal hari ini.")
 
 
+# ── Health Check ──────────────────────────────────────────────
+
+def job_health_check():
+    print("[HealthCheck] Cek semua API dan koneksi...")
+    report = run_health_check()
+    _send_wa(report, "Health check harian")
+
+
 # ── Video Producer ────────────────────────────────────────────
 
 def job_produce_video():
@@ -175,6 +184,7 @@ if __name__ == "__main__":
     scheduler.add_job(job_scan,     "interval", minutes=15, id="scan")
     scheduler.add_job(job_followup, "interval", hours=6,    id="followup")
 
+    scheduler.add_job(job_health_check,           "cron", hour=9,  minute=0,                    id="health_check")
     scheduler.add_job(job_collect_analytics,      "cron", hour=19, minute=0,                    id="analytics_collect")
     scheduler.add_job(job_daily_report,           "cron", hour=20, minute=0,                    id="analytics_daily")
     scheduler.add_job(job_weekly_report,          "cron", day_of_week="mon", hour=7,  minute=0, id="analytics_weekly")
@@ -184,6 +194,7 @@ if __name__ == "__main__":
     scheduler.add_job(job_produce_video,          "cron", hour=8,  minute=0,                    id="video_produce")
 
     print("Scheduler aktif:")
+    print("  - Health check        : tiap hari 09:00")
     print("  - Snapshot metrics    : tiap hari 19:00")
     print("  - Laporan harian WA   : tiap hari 20:00")
     print("  - Laporan mingguan    : Senin 07:00")
