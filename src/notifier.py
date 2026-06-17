@@ -1,14 +1,13 @@
 """
-Notifikasi via Resend.com (HTTP API — tidak diblokir Railway).
+Notifikasi via GitHub Issues API (HTTPS — tidak diblokir Railway).
 
-Env vars yang dibutuhkan:
-  RESEND_API_KEY = re_xxxxxxxxxxxx   (dari resend.com → API Keys)
-  NOTIFY_EMAIL   = penerima@gmail.com
+Setiap notifikasi = 1 GitHub Issue baru di repo.
+GitHub otomatis kirim email ke pemilik/watcher repo.
 
-Cara setup (2 menit):
-  1. Daftar di resend.com
-  2. API Keys → Create → copy key
-  3. Tambah ke Railway Variables
+Env vars:
+  GITHUB_NOTIFY_TOKEN = ghp_xxxxxxxxxxxx  (Personal Access Token, scope: repo)
+  GITHUB_NOTIFY_REPO  = ppbib-2025/ppbib
+  NOTIFY_EMAIL        = (tidak dipakai, tapi tetap ada untuk kompatibilitas)
 """
 
 import os
@@ -16,96 +15,86 @@ import re
 import requests
 from datetime import datetime
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-NOTIFY_EMAIL   = os.getenv("NOTIFY_EMAIL", os.getenv("GMAIL_USER", ""))
-GMAIL_USER     = os.getenv("GMAIL_USER", "")      # tetap ada untuk kompatibilitas
+GITHUB_TOKEN   = os.getenv("GITHUB_NOTIFY_TOKEN", "")
+GITHUB_REPO    = os.getenv("GITHUB_NOTIFY_REPO", "ppbib-2025/ppbib")
+NOTIFY_EMAIL   = os.getenv("NOTIFY_EMAIL", "")
+GMAIL_USER     = os.getenv("GMAIL_USER", "")
 GMAIL_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
 
 
-def _markdown_to_html(text: str) -> str:
-    """Konversi format sederhana ke HTML untuk email yang lebih mudah dibaca."""
-    lines  = text.split("\n")
-    output = []
-    for line in lines:
-        # Bold: *teks* → <b>teks</b>
-        line = re.sub(r"\*([^*]+)\*", r"<b>\1</b>", line)
-        # Italic: _teks_ → <i>teks</i>
-        line = re.sub(r"_([^_]+)_", r"<i>\1</i>", line)
-        # Separator
-        if line.strip() == "━━━━━━━━━━━━━━━━━━━━━━":
-            output.append("<hr style='border:1px solid #ddd; margin:8px 0'>")
-            continue
-        # Emoji baris kosong
-        if line.strip() == "":
-            output.append("<br>")
-            continue
-        output.append(line + "<br>")
-
-    body = "\n".join(output)
-    return f"""
-    <html><body style="font-family: monospace; font-size: 14px;
-                        background:#f9f9f9; padding:16px;">
-      <div style="max-width:600px; background:#fff; padding:20px;
-                  border-radius:8px; border:1px solid #e0e0e0;">
-        {body}
-      </div>
-    </body></html>
-    """
+def is_notifier_ready() -> bool:
+    return bool(GITHUB_TOKEN and GITHUB_REPO)
 
 
 def _extract_subject(text: str) -> str:
-    """Ambil baris pertama sebagai subject email."""
     for line in text.split("\n"):
         clean = line.strip().lstrip("*").rstrip("*").strip()
-        # Hapus emoji dan karakter kontrol
         clean = re.sub(r"[^\w\s\-–|:()%+./,]", "", clean).strip()
         if clean:
             return clean[:80]
     return "PPBIB Notifikasi"
 
 
+def _to_markdown(text: str) -> str:
+    """Konversi format pesan ke Markdown GitHub."""
+    lines  = text.split("\n")
+    output = []
+    for line in lines:
+        line = re.sub(r"\*([^*]+)\*", r"**\1**", line)   # *bold* → **bold**
+        line = re.sub(r"_([^_]+)_",   r"*\1*",   line)   # _italic_ → *italic*
+        if line.strip() == "━━━━━━━━━━━━━━━━━━━━━━":
+            output.append("---")
+        else:
+            output.append(line)
+    return "\n".join(output)
+
+
 def send_notification(message: str, subject: str | None = None) -> bool:
-    """Kirim notifikasi via Resend.com. Return True jika berhasil."""
+    """Buat GitHub Issue sebagai notifikasi. Return True jika berhasil."""
     return _send(message, subject) is None
 
 
 def _send(message: str, subject: str | None = None) -> str | None:
-    """Kirim email via Resend API. Return None jika sukses, string error jika gagal."""
-    if not RESEND_API_KEY:
-        return "RESEND_API_KEY belum diset di Railway Variables"
-    if not NOTIFY_EMAIL:
-        return "NOTIFY_EMAIL belum diset di Railway Variables"
+    """Buat Issue di GitHub repo. Return None jika sukses, string error jika gagal."""
+    if not GITHUB_TOKEN:
+        return "GITHUB_NOTIFY_TOKEN belum diset di Railway Variables"
+    if not GITHUB_REPO:
+        return "GITHUB_NOTIFY_REPO belum diset di Railway Variables"
 
-    subj = subject or _extract_subject(message)
-    html = _markdown_to_html(message)
+    title = subject or _extract_subject(message)
+    body  = _to_markdown(message)
+    now   = datetime.now().strftime("%d %b %Y %H:%M")
+
+    # Label otomatis berdasarkan konten
+    labels = ["bot-notif"]
+    if "Trading" in title or "trading" in title:
+        labels.append("trading-sim")
+    elif "Screener" in title or "screener" in title:
+        labels.append("screener")
 
     try:
         resp = requests.post(
-            "https://api.resend.com/emails",
+            f"https://api.github.com/repos/{GITHUB_REPO}/issues",
             headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
+                "Authorization": f"Bearer {GITHUB_TOKEN}",
+                "Accept":        "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
             },
             json={
-                "from":    "PPBIB Bot <onboarding@resend.dev>",
-                "to":      [NOTIFY_EMAIL],
-                "subject": subj,
-                "text":    message,
-                "html":    html,
+                "title": f"[{now}] {title}",
+                "body":  body,
+                "labels": labels,
             },
             timeout=15,
         )
-        if resp.status_code in (200, 201):
-            print(f"[Notifier] Email terkirim ke {NOTIFY_EMAIL} via Resend")
+        if resp.status_code == 201:
+            issue_url = resp.json().get("html_url", "")
+            print(f"[Notifier] Issue dibuat: {issue_url}")
             return None
-        err = f"Resend HTTP {resp.status_code}: {resp.text}"
+        err = f"GitHub API HTTP {resp.status_code}: {resp.text[:200]}"
         print(f"[Notifier] {err}")
         return err
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
         print(f"[Notifier] {err}")
         return err
-
-
-def is_notifier_ready() -> bool:
-    return bool(RESEND_API_KEY and NOTIFY_EMAIL)

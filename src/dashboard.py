@@ -68,8 +68,8 @@ def _do_refresh():
 
 @app.route("/")
 def home():
-    from src.notifier import is_notifier_ready, NOTIFY_EMAIL
-    email_status = f"✅ Resend siap → {NOTIFY_EMAIL}" if is_notifier_ready() else "❌ Belum diset (isi RESEND_API_KEY + NOTIFY_EMAIL di Railway Variables)"
+    from src.notifier import is_notifier_ready, GITHUB_REPO
+    email_status = f"✅ GitHub Issues siap → {GITHUB_REPO}" if is_notifier_ready() else "❌ Belum diset (isi GITHUB_NOTIFY_TOKEN + GITHUB_NOTIFY_REPO di Railway Variables)"
     return (
         "<h3 style='font-family:sans-serif;padding:20px'>PPBIB Bot aktif ✅</h3>"
         f"<p style='font-family:sans-serif;padding:0 20px'>Email: {email_status}</p>"
@@ -81,13 +81,13 @@ def home():
 
 @app.route("/test-email")
 def test_email():
-    from src.notifier import _send, is_notifier_ready, NOTIFY_EMAIL, RESEND_API_KEY
+    from src.notifier import _send, is_notifier_ready, GITHUB_REPO, GITHUB_TOKEN
     if not is_notifier_ready():
         return jsonify({
             "ok": False,
-            "error": "RESEND_API_KEY / NOTIFY_EMAIL belum diset di Railway Variables",
-            "resend_key_set": bool(RESEND_API_KEY),
-            "notify_email_set": bool(NOTIFY_EMAIL),
+            "error": "GITHUB_NOTIFY_TOKEN / GITHUB_NOTIFY_REPO belum diset di Railway Variables",
+            "token_set": bool(GITHUB_TOKEN),
+            "repo": GITHUB_REPO,
         }), 400
 
     msg = (
@@ -101,9 +101,9 @@ def test_email():
     )
     err = _send(msg, subject="✅ Test Email PPBIB — Berhasil!")
     if err is None:
-        return jsonify({"ok": True, "message": f"Email terkirim ke {NOTIFY_EMAIL}"}), 200
+        return jsonify({"ok": True, "message": f"GitHub Issue dibuat di {GITHUB_REPO} — cek email GitHub kamu"}), 200
     else:
-        return jsonify({"ok": False, "error": err, "notify_email": NOTIFY_EMAIL}), 500
+        return jsonify({"ok": False, "error": err}), 500
 
 
 @app.route("/analytics/refresh")
