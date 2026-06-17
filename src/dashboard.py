@@ -75,7 +75,12 @@ def home():
         f"<p style='font-family:sans-serif;padding:0 20px'>Email: {email_status}</p>"
         "<p style='font-family:sans-serif;padding:4px 20px'>"
         "<a href='/analytics'>📊 Analytics</a> &nbsp;|&nbsp; "
-        "<a href='/test-email'>📧 Test Kirim Email</a></p>"
+        "<a href='/test-email'>📧 Test Email</a></p>"
+        "<p style='font-family:sans-serif;padding:4px 20px'><b>Jalankan Manual:</b></p>"
+        "<p style='font-family:sans-serif;padding:4px 20px'>"
+        "<a href='/run/screener' style='background:#16a34a;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;margin-right:8px'>📊 Screener Saham</a>"
+        "<a href='/run/trading' style='background:#2563eb;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none'>🤖 Simulasi Trading</a>"
+        "</p>"
     )
 
 
@@ -104,6 +109,38 @@ def test_email():
         return jsonify({"ok": True, "message": f"Email terkirim ke {NOTIFY_EMAIL} via Resend"}), 200
     else:
         return jsonify({"ok": False, "error": err}), 500
+
+
+@app.route("/run/screener")
+def run_screener():
+    def _job():
+        try:
+            from src.stock_screener import run_screen, format_screen_report
+            from src.notifier import send_notification
+            results = run_screen()
+            report  = format_screen_report(results)
+            print(report)
+            send_notification(report, subject="📊 Screener Saham IDX (Manual)")
+        except Exception as e:
+            print(f"[Screener Manual] ERROR: {e}")
+    threading.Thread(target=_job, daemon=True).start()
+    return "<script>alert('Screener jalan! Email dikirim dalam ~2 menit.'); history.back();</script>"
+
+
+@app.route("/run/trading")
+def run_trading():
+    def _job():
+        try:
+            from src.trading_sim import run_daily_trading, format_trading_report
+            from src.notifier import send_notification
+            result = run_daily_trading()
+            report = format_trading_report(result)
+            print(report)
+            send_notification(report, subject="🤖 Simulasi Trading (Manual)")
+        except Exception as e:
+            print(f"[Trading Manual] ERROR: {e}")
+    threading.Thread(target=_job, daemon=True).start()
+    return "<script>alert('Trading sim jalan! Email dikirim dalam ~2 menit.'); history.back();</script>"
 
 
 @app.route("/analytics/refresh")
