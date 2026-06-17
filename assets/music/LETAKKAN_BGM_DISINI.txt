@@ -1,0 +1,12 @@
+Taruh file MP3 background music di folder ini.
+
+Cara download gratis (bebas royalti):
+1. Buka https://pixabay.com/music/search/upbeat/
+2. Filter genre: Acoustic / Folk / Country
+3. Download 3-5 track
+4. Pindahkan file .mp3 ke folder ini
+
+Atau jalankan script otomatis di terminal:
+  python scripts/download_bgm.py
+
+Sistem akan pilih BGM secara acak setiap kali generate video.
