@@ -11,7 +11,7 @@ Alur:
 import os
 from datetime import datetime
 from anthropic import Anthropic
-from src.wavespeed_api import generate_video, download_video
+from src.siliconflow_api import generate_video, download_video
 from src.content_generator import get_todays_content
 from src.trending_feed_analyzer import get_top_trending_topic
 
@@ -65,11 +65,11 @@ def produce_video(video_content: dict) -> dict:
     visual_prompt = script_to_visual_prompt(script, topic, hook)
     print(f"[VideoProducer] Visual prompt:\n{visual_prompt}")
 
-    # 2. Generate via WaveSpeed AI (Wan 2.2 720p Ultra Fast)
+    # 2. Generate via SiliconFlow (Wan 2.2 T2V, 720p vertical 9:16)
     video_url = generate_video(
         prompt=visual_prompt,
         duration=5,
-        aspect_ratio="9:16",
+        image_size="720x1280",
     )
 
     # 3. Download MP4
