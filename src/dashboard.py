@@ -8,7 +8,7 @@ import json
 import os
 import threading
 from datetime import datetime
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, jsonify
 
 app = Flask(__name__)
 
@@ -68,11 +68,40 @@ def _do_refresh():
 
 @app.route("/")
 def home():
+    from src.notifier import is_notifier_ready, NOTIFY_EMAIL
+    email_status = f"✅ Gmail siap → {NOTIFY_EMAIL}" if is_notifier_ready() else "❌ Gmail belum diset (isi GMAIL_USER, GMAIL_APP_PASSWORD, NOTIFY_EMAIL)"
     return (
         "<h3 style='font-family:sans-serif;padding:20px'>PPBIB Bot aktif ✅</h3>"
-        "<p style='font-family:sans-serif;padding:0 20px'>"
-        "<a href='/analytics'>Lihat Analytics</a></p>"
+        f"<p style='font-family:sans-serif;padding:0 20px'>Email: {email_status}</p>"
+        "<p style='font-family:sans-serif;padding:4px 20px'>"
+        "<a href='/analytics'>📊 Analytics</a> &nbsp;|&nbsp; "
+        "<a href='/test-email'>📧 Test Kirim Email</a></p>"
     )
+
+
+@app.route("/test-email")
+def test_email():
+    from src.notifier import send_notification, is_notifier_ready, NOTIFY_EMAIL
+    if not is_notifier_ready():
+        return jsonify({
+            "ok": False,
+            "error": "GMAIL_USER / GMAIL_APP_PASSWORD / NOTIFY_EMAIL belum diset di Railway Variables"
+        }), 400
+
+    msg = (
+        "🤖 *Test Email PPBIB*\n\n"
+        "✅ Koneksi Gmail berhasil!\n\n"
+        "Bot kamu sudah siap mengirim:\n"
+        "  • Screener saham IDX setiap Senin-Jumat 08:30\n"
+        "  • Simulasi trading Rp10 juta setiap 09:05\n"
+        "  • Laporan analytics setiap hari 20:00\n\n"
+        f"_Dikirim pada: {datetime.now().strftime('%d %b %Y %H:%M:%S')}_"
+    )
+    ok = send_notification(msg, subject="✅ Test Email PPBIB — Berhasil!")
+    if ok:
+        return jsonify({"ok": True, "message": f"Email terkirim ke {NOTIFY_EMAIL}"}), 200
+    else:
+        return jsonify({"ok": False, "error": "Gagal kirim — cek GMAIL_APP_PASSWORD"}), 500
 
 
 @app.route("/analytics/refresh")
