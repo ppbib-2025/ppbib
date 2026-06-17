@@ -31,7 +31,7 @@ from src.video_producer import (
     format_trending_video_tg,
 )
 from src.trending_feed_analyzer import analyze_trending_feed, format_trending_feed_wa
-from src.telegram_notifier import send_telegram, is_telegram_configured
+from src.telegram_notifier import send_telegram, send_video_telegram, is_telegram_configured
 from src.whatsapp import send_whatsapp, is_wa_connected
 from src.dashboard import app as flask_app
 
@@ -55,6 +55,15 @@ def _send_tg(msg: str, label: str):
         print(f"[Telegram] {label}: {'terkirim' if ok else 'GAGAL'}")
     else:
         print(f"[Telegram] Skip {label} (TELEGRAM_BOT_TOKEN/CHAT_ID belum diset).")
+
+
+def _send_tg_video(video_path: str, caption: str, label: str):
+    """Kirim file video ke Telegram (bisa langsung diputar & didownload)."""
+    if is_telegram_configured():
+        ok = send_video_telegram(video_path, caption=caption)
+        print(f"[Telegram] {label}: {'terkirim' if ok else 'GAGAL'}")
+    else:
+        print(f"[Telegram] Skip {label} (token belum diset).")
 
 
 # ── Bot TikTok ────────────────────────────────────────────
@@ -147,16 +156,17 @@ def job_daily_content_reminder():
 def job_produce_video():
     if not VIDEO_ENABLED:
         return
-    print("[Video] Produksi video harian via Seedance...")
+    print("[Video] Produksi video harian...")
     try:
         info = produce_todays_video()
         if info:
             msg = format_video_ready_tg(info)
             print(msg)
             _send_tg(msg, "Video siap upload")
+            _send_tg_video(info["video_path"], caption=f"🎬 {info['topic']}", label="File video")
     except Exception as e:
         print(f"[Video] ERROR: {e}")
-        _send_wa(f"⚠️ Seedance error: {e}", "Error video producer")
+        _send_tg(f"⚠️ Video gagal: {e}", "Error video producer")
 
 
 # ── Trending Feed + Video ────────────────────────────────
@@ -178,13 +188,14 @@ def job_produce_trending_video():
     """Tiap hari 11:00 — produksi 1 video reaktif berdasarkan trending feed."""
     if not VIDEO_ENABLED:
         return
-    print("[TrendingVideo] Produksi video trending via Seedance...")
+    print("[TrendingVideo] Produksi video trending...")
     try:
         info = produce_trending_video(urgency_filter="HIGH")
         if info:
             msg = format_trending_video_tg(info)
             print(msg)
             _send_tg(msg, "Trending video siap upload")
+            _send_tg_video(info["video_path"], caption=f"📈 {info['topic']}", label="File trending video")
     except Exception as e:
         print(f"[TrendingVideo] ERROR: {e}")
         _send_tg(f"⚠️ Trending video error: {e}", "Error trending video")

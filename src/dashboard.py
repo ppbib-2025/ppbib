@@ -3,12 +3,15 @@ Dashboard analytics PPBIB — bisa dibuka di browser kapan saja.
 Route: GET /                  → status bot
        GET /analytics         → tabel performa konten semua platform
        GET /analytics/refresh → collect metrics sekarang, redirect ke /analytics
+       GET /videos            → daftar video siap download
+       GET /videos/<filename> → download/stream file video MP4
 """
+import glob
 import json
 import os
 import threading
 from datetime import datetime
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, send_file, url_for
 
 app = Flask(__name__)
 
@@ -272,3 +275,62 @@ li{{margin-bottom:3px;font-size:13px}}
 
     html += '</div></body></html>'
     return html
+
+
+# ── Video download endpoints ──────────────────────────────────────────────────
+
+VIDEO_DIR = "data/videos"
+
+
+@app.route("/videos")
+def page_videos():
+    """Halaman daftar video yang sudah digenerate — klik untuk download."""
+    files = sorted(
+        glob.glob(os.path.join(VIDEO_DIR, "*.mp4")),
+        key=os.path.getmtime,
+        reverse=True,
+    )
+    css = (
+        "body{font-family:sans-serif;background:#111;color:#eee;padding:24px}"
+        "h1{color:#4af;margin-bottom:16px}"
+        "table{border-collapse:collapse;width:100%}"
+        "th,td{padding:10px 14px;border-bottom:1px solid #333;text-align:left}"
+        "th{background:#222;font-size:13px;color:#aaa}"
+        "a{color:#4af;text-decoration:none}"
+        "a:hover{text-decoration:underline}"
+        ".sz{color:#888;font-size:12px}"
+        ".empty{color:#666}"
+    )
+    html = f'<html><head><title>PPBIB Videos</title><style>{css}</style></head><body>'
+    html += '<h1>🎬 Video Siap Upload</h1>'
+    if not files:
+        html += '<p class="empty">Belum ada video. Jalankan job produce_video dulu.</p>'
+    else:
+        html += '<table><tr><th>File</th><th>Ukuran</th><th>Waktu</th><th></th></tr>'
+        for f in files:
+            name  = os.path.basename(f)
+            mb    = os.path.getsize(f) / (1024 * 1024)
+            mtime = datetime.fromtimestamp(os.path.getmtime(f)).strftime("%Y-%m-%d %H:%M")
+            html += (
+                f'<tr>'
+                f'<td><a href="/videos/{name}">{name}</a></td>'
+                f'<td class="sz">{mb:.1f} MB</td>'
+                f'<td class="sz">{mtime}</td>'
+                f'<td><a href="/videos/{name}">⬇ Download</a></td>'
+                f'</tr>'
+            )
+        html += '</table>'
+    html += '<p style="margin-top:20px;font-size:12px;color:#555">← <a href="/">Kembali ke dashboard</a></p>'
+    html += '</body></html>'
+    return html
+
+
+@app.route("/videos/<filename>")
+def download_video(filename: str):
+    """Stream / download 1 file video MP4."""
+    # Sanitize: hanya izinkan nama file tanpa path traversal
+    safe = os.path.basename(filename)
+    path = os.path.join(VIDEO_DIR, safe)
+    if not os.path.exists(path) or not safe.endswith(".mp4"):
+        return "Video tidak ditemukan.", 404
+    return send_file(path, mimetype="video/mp4", as_attachment=True, download_name=safe)
