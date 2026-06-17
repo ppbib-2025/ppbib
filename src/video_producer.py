@@ -1,19 +1,18 @@
 """
-Video Producer — pipeline: script → visual prompt → WaveSpeed AI (Wan 2.2) → MP4 siap upload.
+Video Producer — pipeline lengkap: script → MP4 siap upload.
 
 Alur:
-  1. Ambil script dari content_queue.json atau trending_feed.json
-  2. Claude convert script narasi → visual prompt untuk Wan 2.2
-  3. Submit ke WaveSpeed AI (Wan 2.2 720p Ultra Fast)
-  4. Poll sampai selesai, download MP4 ke data/videos/
-  5. Kirim notifikasi Telegram
+  1. Claude convert script → visual prompt (Wan 2.2 style)
+  2. SiliconFlow Wan 2.2 generate visual → raw_video.mp4
+  3. edge-tts (ArdiNeural) generate voiceover.mp3 + subtitle.srt
+  4. FFmpeg compose: visual + voiceover + subtitle burn + BGM → final.mp4
 """
 import os
 from datetime import datetime
 from anthropic import Anthropic
 from src.siliconflow_api import generate_video, download_video
 from src.tts_engine import generate_tts
-from src.video_composer import compose_video_audio, ffmpeg_available
+from src.video_composer import compose_full_video, get_random_bgm, ffmpeg_available
 from src.content_generator import get_todays_content
 from src.trending_feed_analyzer import get_top_trending_topic
 
@@ -74,25 +73,34 @@ def produce_video(video_content: dict) -> dict:
         image_size="720x1280",
     )
 
-    # 3. Download raw video MP4 (visual only)
+    # 3. Download raw video MP4 (visual only, belum ada audio)
     date_str   = datetime.now().strftime("%Y%m%d")
     safe_topic = topic[:25].replace(" ", "_").replace("/", "-")
     raw_path   = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}_raw.mp4")
     download_video(video_url, raw_path)
 
-    # 4. Generate TTS voiceover dari script narasi
-    tts_text  = f"{hook}. {script}"
-    audio_dir = "data/audio"
-    audio_path = os.path.join(audio_dir, f"{date_str}_{safe_topic}.mp3")
-    generate_tts(tts_text, output_path=audio_path)
+    # 4. Generate TTS voiceover + subtitle SRT (ArdiNeural, gratis)
+    tts_text   = f"{hook}. {script}"
+    audio_path = os.path.join("data/audio", f"{date_str}_{safe_topic}.mp3")
+    srt_path   = os.path.join("data/audio", f"{date_str}_{safe_topic}.srt")
+    generate_tts(tts_text, output_path=audio_path, srt_path=srt_path)
 
-    # 5. Gabungkan video + voiceover (butuh ffmpeg)
+    # 5. Compose: visual + voiceover + subtitle + BGM → 1 MP4 final
+    final_path = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}.mp4")
     if ffmpeg_available():
-        final_path = os.path.join(VIDEO_DIR, f"{date_str}_{safe_topic}.mp4")
-        compose_video_audio(raw_path, audio_path, final_path)
-        os.remove(raw_path)   # hapus raw setelah compose
+        bgm_path = get_random_bgm()
+        if bgm_path:
+            print(f"[VideoProducer] BGM: {os.path.basename(bgm_path)}")
+        compose_full_video(
+            video_path=raw_path,
+            audio_path=audio_path,
+            srt_path=srt_path,
+            output_path=final_path,
+            bgm_path=bgm_path,
+        )
+        os.remove(raw_path)
     else:
-        print("[VideoProducer] ffmpeg tidak tersedia — video tanpa voiceover.")
+        print("[VideoProducer] ffmpeg tidak tersedia — simpan raw video.")
         final_path = raw_path
 
     return {
