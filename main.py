@@ -31,6 +31,7 @@ from src.video_producer import (
     format_trending_video_wa,
 )
 from src.trending_feed_analyzer import analyze_trending_feed, format_trending_feed_wa
+from src.telegram_notifier import send_telegram, is_telegram_configured
 from src.whatsapp import send_whatsapp, is_wa_connected
 from src.dashboard import app as flask_app
 
@@ -46,6 +47,14 @@ def _send_wa(msg: str, label: str):
         print(f"[WA] {label}: {'terkirim' if ok else 'GAGAL'}")
     else:
         print(f"[WA] Skip {label} (WA tidak terhubung).")
+
+
+def _send_tg(msg: str, label: str):
+    if is_telegram_configured():
+        ok = send_telegram(msg)
+        print(f"[Telegram] {label}: {'terkirim' if ok else 'GAGAL'}")
+    else:
+        print(f"[Telegram] Skip {label} (TELEGRAM_BOT_TOKEN/CHAT_ID belum diset).")
 
 
 # ── Bot TikTok ────────────────────────────────────────────
@@ -159,10 +168,10 @@ def job_analyze_trending_feed():
         feed = analyze_trending_feed()
         msg = format_trending_feed_wa(feed)
         print(msg)
-        _send_wa(msg, "Trending feed harian")
+        _send_tg(msg, "Trending feed harian")
     except Exception as e:
         print(f"[TrendingFeed] ERROR: {e}")
-        _send_wa(f"⚠️ Trending feed gagal: {e}", "Error trending feed")
+        _send_tg(f"⚠️ Trending feed gagal: {e}", "Error trending feed")
 
 
 def job_produce_trending_video():
@@ -175,10 +184,10 @@ def job_produce_trending_video():
         if info:
             msg = format_trending_video_wa(info)
             print(msg)
-            _send_wa(msg, "Trending video siap upload")
+            _send_tg(msg, "Trending video siap upload")
     except Exception as e:
         print(f"[TrendingVideo] ERROR: {e}")
-        _send_wa(f"⚠️ Trending video error: {e}", "Error trending video")
+        _send_tg(f"⚠️ Trending video error: {e}", "Error trending video")
 
 
 # ── Main ────────────────────────────────────────────────
