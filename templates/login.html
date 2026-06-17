@@ -9,7 +9,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #06112a;
+      background: linear-gradient(135deg, #e8f4fb 0%, #d0e8f5 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -17,42 +17,42 @@
       padding: 20px;
     }
     .login-box {
-      background: #0d1f3c;
-      border: 1px solid #1a3360;
+      background: #ffffff;
+      border: 1px solid #c8dded;
       border-radius: 18px;
       padding: 40px 36px;
       width: 100%;
       max-width: 380px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      box-shadow: 0 8px 32px rgba(0,80,140,0.12);
       text-align: center;
     }
     .logo {
       width: 64px; height: 64px;
-      background: linear-gradient(135deg, #00d4f5, #005fa3);
+      background: linear-gradient(135deg, #0096c7, #023e6e);
       border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
       font-size: 30px;
       margin: 0 auto 20px;
     }
-    h1 { font-size: 1.1rem; font-weight: 700; color: #00d4f5; margin-bottom: 4px; }
-    p  { font-size: .78rem; color: #6a8baa; margin-bottom: 28px; }
-    label { display: block; text-align: left; font-size: .75rem; color: #6a8baa; margin-bottom: 6px; }
+    h1 { font-size: 1.1rem; font-weight: 700; color: #0077b6; margin-bottom: 4px; }
+    p  { font-size: .78rem; color: #5a7a96; margin-bottom: 28px; }
+    label { display: block; text-align: left; font-size: .75rem; color: #5a7a96; margin-bottom: 6px; }
     input[type="password"] {
       width: 100%;
-      background: #0a1628;
-      border: 1px solid #1a3360;
+      background: #f4f9fc;
+      border: 1px solid #c8dded;
       border-radius: 10px;
-      color: #cde4f8;
+      color: #1a2e42;
       font-size: .95rem;
       padding: 12px 14px;
       outline: none;
       transition: border-color .2s;
       margin-bottom: 16px;
     }
-    input[type="password"]:focus { border-color: #00d4f5; box-shadow: 0 0 0 3px rgba(0,212,245,.12); }
+    input[type="password"]:focus { border-color: #0077b6; box-shadow: 0 0 0 3px rgba(0,119,182,.12); }
     button {
       width: 100%;
-      background: linear-gradient(135deg, #00d4f5, #005fa3);
+      background: linear-gradient(135deg, #0096c7, #023e6e);
       border: none;
       border-radius: 10px;
       color: #fff;
@@ -64,10 +64,10 @@
     }
     button:hover { opacity: .9; }
     .error {
-      background: rgba(239,71,111,.12);
-      border: 1px solid rgba(239,71,111,.4);
+      background: rgba(214,43,80,.08);
+      border: 1px solid rgba(214,43,80,.3);
       border-radius: 8px;
-      color: #ef476f;
+      color: #d62b50;
       font-size: .82rem;
       padding: 10px 14px;
       margin-bottom: 16px;
@@ -75,7 +75,7 @@
       align-items: center;
       gap: 8px;
     }
-    .footer-text { font-size: .7rem; color: #6a8baa; margin-top: 20px; }
+    .footer-text { font-size: .7rem; color: #5a7a96; margin-top: 20px; }
   </style>
 </head>
 <body>
