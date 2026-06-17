@@ -34,13 +34,18 @@ from src.trending_feed_analyzer import analyze_trending_feed, format_trending_fe
 from src.telegram_notifier import send_telegram, send_video_telegram, is_telegram_configured
 from src.whatsapp import send_whatsapp, is_wa_connected
 from src.dashboard import app as flask_app
+from src.gdrive_client import (
+    is_gdrive_configured,
+    sync_clips_from_drive,
+    upload_video as gdrive_upload,
+)
 
-WA_NUMBER       = os.getenv("WHATSAPP_NUMBER", "")
+WA_NUMBER        = os.getenv("WHATSAPP_NUMBER", "")
 REPORT_WA_NUMBER = os.getenv("REPORT_WA_NUMBER", WA_NUMBER)
-_SF_KEY         = bool(os.getenv("SILICONFLOW_API_KEY"))
+_SF_KEY          = bool(os.getenv("SILICONFLOW_API_KEY"))
 try:
     from src.video_composer import has_local_clips as _has_clips
-    VIDEO_ENABLED = _SF_KEY or _has_clips()
+    VIDEO_ENABLED = _SF_KEY or _has_clips() or is_gdrive_configured()
 except Exception:
     VIDEO_ENABLED = _SF_KEY
 TIKTOK_ENABLED  = bool(load_token())
@@ -62,13 +67,43 @@ def _send_tg(msg: str, label: str):
         print(f"[Telegram] Skip {label} (TELEGRAM_BOT_TOKEN/CHAT_ID belum diset).")
 
 
+_TG_MAX_MB = 49   # Telegram limit 50MB
+
+
 def _send_tg_video(video_path: str, caption: str, label: str):
-    """Kirim file video ke Telegram (bisa langsung diputar & didownload)."""
-    if is_telegram_configured():
+    """
+    Kirim video ke Telegram.
+    - Jika <= 49MB  : upload langsung (bisa diputar inline)
+    - Jika > 49MB   : upload ke Google Drive, kirim link
+    """
+    if not is_telegram_configured():
+        print(f"[Telegram] Skip {label} (token belum diset).")
+        return
+
+    size_mb = os.path.getsize(video_path) / (1024 * 1024)
+
+    if size_mb <= _TG_MAX_MB:
         ok = send_video_telegram(video_path, caption=caption)
         print(f"[Telegram] {label}: {'terkirim' if ok else 'GAGAL'}")
-    else:
-        print(f"[Telegram] Skip {label} (token belum diset).")
+        return
+
+    # File besar → upload ke Drive, kirim link
+    print(f"[Telegram] Video {size_mb:.1f} MB > 49MB — upload ke Google Drive...")
+    if not is_gdrive_configured():
+        send_telegram(
+            f"{caption}\n\n⚠️ Video {size_mb:.0f}MB terlalu besar untuk Telegram.\n"
+            f"Set `GDRIVE_OUTPUT_FOLDER_ID` untuk auto-upload ke Drive.",
+        )
+        return
+    try:
+        drive_url = gdrive_upload(video_path)
+        send_telegram(
+            f"{caption}\n\n📥 *Download video* (Google Drive):\n{drive_url}",
+        )
+        print(f"[Telegram] {label}: link Drive terkirim")
+    except Exception as e:
+        print(f"[Telegram/Drive] ERROR upload: {e}")
+        send_telegram(f"{caption}\n\n⚠️ Gagal upload ke Drive: {e}")
 
 
 # ── Bot TikTok ────────────────────────────────────────────
@@ -216,11 +251,26 @@ if __name__ == "__main__":
     except Exception as _e:
         print(f"[BGM] Skip auto-download: {_e}")
 
+    # Sync clip sumber dari Google Drive (jika dikonfigurasi)
+    if is_gdrive_configured():
+        try:
+            sync_clips_from_drive("assets/clips")
+        except Exception as _e:
+            print(f"[GDrive] Sync clip gagal: {_e}")
+
     print("=" * 50)
     print("PPBIB Bot mulai...")
     print(f"  TikTok   : {'AKTIF' if TIKTOK_ENABLED else 'NONAKTIF (setup token dulu)'}")
-    _video_mode = "AI (SiliconFlow Wan 2.2)" if _SF_KEY else ("Clip Lokal (assets/clips/)" if VIDEO_ENABLED else "NONAKTIF")
-    print(f"  Video    : {_video_mode if VIDEO_ENABLED else 'NONAKTIF — set SILICONFLOW_API_KEY atau taruh clip di assets/clips/'}")
+    if _SF_KEY:
+        _video_mode = "AI (SiliconFlow Wan 2.2)"
+    elif is_gdrive_configured():
+        _video_mode = "Clip dari Google Drive"
+    elif VIDEO_ENABLED:
+        _video_mode = "Clip Lokal (assets/clips/)"
+    else:
+        _video_mode = "NONAKTIF"
+    print(f"  Video    : {_video_mode}")
+    print(f"  GDrive   : {'AKTIF' if is_gdrive_configured() else 'NONAKTIF (opsional)'}")
     print(f"  WA Report: {REPORT_WA_NUMBER or 'BELUM DISET'}")
     print("=" * 50)
 
