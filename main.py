@@ -24,6 +24,7 @@ from src.content_generator import (
     format_today_for_whatsapp,
 )
 from src.daily_reminder import get_fixed_content_today, format_fixed_reminder_wa
+from src.telegram_notify import send_telegram, is_telegram_configured
 from src.auto_research import run_weekly_evaluation
 from src.video_producer import produce_todays_video, format_video_ready_wa
 from src.whatsapp import send_whatsapp, is_wa_connected
@@ -36,11 +37,20 @@ TIKTOK_ENABLED  = bool(load_token())
 
 
 def _send_wa(msg: str, label: str):
+    sent = False
     if REPORT_WA_NUMBER and is_wa_connected():
         ok = send_whatsapp(REPORT_WA_NUMBER, msg)
         print(f"[WA] {label}: {'terkirim' if ok else 'GAGAL'}")
+        sent = ok
     else:
         print(f"[WA] Skip {label} (WA tidak terhubung).")
+    # Kirim via Telegram juga (atau sebagai fallback kalau WA gagal)
+    if is_telegram_configured() and not sent:
+        ok = send_telegram(msg)
+        print(f"[Telegram] {label}: {'terkirim' if ok else 'GAGAL'}")
+    elif is_telegram_configured():
+        send_telegram(msg)
+        print(f"[Telegram] {label}: terkirim")
 
 
 # ── Bot TikTok ────────────────────────────────────────────
