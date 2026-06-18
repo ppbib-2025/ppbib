@@ -23,6 +23,7 @@ from src.content_generator import (
     get_todays_content,
     format_today_for_whatsapp,
 )
+from src.daily_reminder import get_fixed_content_today, format_fixed_reminder_wa
 from src.auto_research import run_weekly_evaluation
 from src.video_producer import produce_todays_video, format_video_ready_wa
 from src.whatsapp import send_whatsapp, is_wa_connected
@@ -118,6 +119,13 @@ def job_generate_content():
 
 
 def job_daily_content_reminder():
+    # Prioritas: jadwal tetap 18 Jun–4 Jul 2026; fallback ke AI-generated
+    fixed = get_fixed_content_today()
+    if fixed:
+        msg = format_fixed_reminder_wa(fixed)
+        print(msg)
+        _send_wa(msg, "Reminder konten harian (jadwal tetap)")
+        return
     content = get_todays_content()
     if content:
         msg = format_today_for_whatsapp(content)
