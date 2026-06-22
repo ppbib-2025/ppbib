@@ -4,3 +4,5 @@ data/tokens/
 __pycache__/
 *.pyc
 .venv/
+credentials.json
+inris_cijeruk/credentials.json
