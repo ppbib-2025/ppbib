@@ -10,12 +10,11 @@
 **Format:** Reels / TikTok (60 detik)
 **Tujuan:** Pancing komentar, bangun awareness masalah
 
-### Hook (3 detik pertama):
-> "Koki kamu mati dalam 2 minggu? Ini bukan salah kokinya."
-
 ### Script narasi:
 ```
-3 kesalahan yang hampir semua hobbyist koki baru lakukan:
+Koki kamu mati dalam 2 minggu? Ini bukan salah kokinya.
+
+Ada 3 kesalahan yang hampir semua hobbyist koki baru lakukan:
 
 Pertama — langsung beli koki mahal tanpa tahu parameter air.
 Koki fancy butuh pH 7–7,5, suhu 22–26°C.
