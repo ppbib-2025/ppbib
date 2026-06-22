@@ -1,20 +1,39 @@
 """
-Template pesan sales funnel PPBIB.
-Sesuaikan teks sesuai kebutuhan.
+Template pesan sales funnel PPBIB — Pelatihan Budidaya Koki.
 """
 
+# Keyword umum ketertarikan
 KEYWORDS_MINAT = [
     "info", "daftar", "harga", "berapa", "gimana", "cara", "mau", "ikut",
     "join", "bisa", "pelatihan", "ppbib", "kursus", "belajar", "biaya",
 ]
 
+# Keyword spesifik koki — trigger prioritas tinggi
+KEYWORDS_KOKI = [
+    "koki", "ikan koki", "goldfish", "fancy", "indukan", "benih", "spawning",
+    "pijah", "pemijahan", "breeding", "budidaya", "ternak koki", "anakan",
+    "larva", "survival", "fcr", "kolam koki",
+]
+
 
 def is_interested(comment_text: str) -> bool:
     text = comment_text.lower()
-    return any(kw in text for kw in KEYWORDS_MINAT)
+    return any(kw in text for kw in KEYWORDS_MINAT + KEYWORDS_KOKI)
 
 
-def reply_komentar(username: str) -> str:
+def is_koki_specific(comment_text: str) -> bool:
+    """True jika komentar menyebut topik koki secara eksplisit."""
+    text = comment_text.lower()
+    return any(kw in text for kw in KEYWORDS_KOKI)
+
+
+def reply_komentar(username: str, is_koki: bool = False) -> str:
+    if is_koki:
+        return (
+            f"Halo @{username}! Sip, kamu di tempat yang tepat 🐟 "
+            "Kami PPBIB Cijeruk — pusat riset koki resmi pemerintah. "
+            "Cek DM ya, kami kirimkan info pelatihan breeding koki lengkap! 🎯"
+        )
     return (
         f"Halo @{username}! Terima kasih sudah tertarik 😊 "
         "Untuk info lengkap pelatihan PPBIB, silakan cek DM ya — "
@@ -25,17 +44,46 @@ def reply_komentar(username: str) -> str:
 def pesan_dm_awal(username: str) -> str:
     return f"""Halo {username}! 👋
 
-Terima kasih sudah komentar di konten kami.
+Terima kasih sudah tertarik dengan konten koki kami.
 
-Kami dari tim PPBIB ingin berbagi info pelatihan eksklusif yang bisa membantu kamu:
+Kami tim PPBIB Cijeruk — lembaga riset perikanan resmi di bawah KKP/BRPBATPP, dan kami membuka *Pelatihan Budidaya Koki* untuk hobbyist & calon peternak serius.
 
-✅ Pelatihan profesional bersertifikat
-✅ Mentor berpengalaman di bidangnya
-✅ Kuota terbatas setiap batch
+🐟 *Yang akan kamu bawa pulang:*
+✅ Cara seleksi indukan koki yang benar (bukan coba-coba)
+✅ Sistem pemijahan & manajemen benih — survival rate >70%
+✅ FCR koki: cara hitung & hemat biaya pakan
+✅ Strategi jual koki ke komunitas hobbyist
 
-Boleh kami tahu, apa yang paling ingin kamu pelajari atau capai dari pelatihan ini?
+🎁 *Bonus untuk peserta:*
+→ 1 pasang indukan koki koleksi PPBIB (strain pilihan)
+→ Program tampung benih 3 bulan di fasilitas kami
+→ Modul digital + grup WA alumni 60 hari
 
-Kami siap bantu carikan program yang paling sesuai untuk kamu 🙏"""
+📍 Lokasi: PPBIB Cijeruk, Bogor (fasilitas kolam lengkap)
+🗓️ Format: 1 hari penuh, praktik langsung
+
+Boleh tahu — kamu lebih tertarik untuk *hobi yang lebih serius*, atau sudah punya rencana *jual benih/ikan jadi*?
+
+Biar kami bisa kasih rekomendasi yang paling pas 🙏"""
+
+
+def pesan_dm_webinar(username: str, link_webinar: str, tanggal: str) -> str:
+    """DM untuk lead yang masuk dari promosi webinar."""
+    return f"""Halo {username}! 🎓
+
+Terima kasih sudah daftar webinar *"Sistem Breeding Koki Sendiri di Rumah"* bersama PPBIB!
+
+📅 Tanggal: {tanggal}
+🔗 Link Zoom: {link_webinar}
+
+Yang akan kamu pelajari dalam 3 jam:
+• Kenapa hobbyist koki terus beli, bukan produksi
+• Sistem breeding praktis dari nol
+• Cara jual ke komunitas hobbyist (FB Group, WA, marketplace)
+
+*Tips:* Siapkan pertanyaan spesifik tentang kendala breeding kamu — sesi Q&A akan fokus ke solusi praktis.
+
+Sampai jumpa di webinar! 🐟"""
 
 
 def followup_d1(username: str) -> str:
@@ -43,23 +91,28 @@ def followup_d1(username: str) -> str:
 
 Kami dari PPBIB mau follow up sebentar.
 
-Apakah kamu sudah sempat lihat info pelatihan yang kami kirimkan kemarin?
+Sudah sempat baca info pelatihan koki yang kami kirimkan kemarin?
 
-Jika ada pertanyaan, kami siap bantu jawab ya!
-Atau jika mau langsung konsultasi via WhatsApp, bisa hubungi kami di sini 👇"""
+Kalau ada pertanyaan soal materi, bonus indukan, atau teknis pendaftaran — langsung tanya ya, kami siap jawab!
+
+Atau kalau lebih nyaman ngobrol langsung, balas pesan ini dan kami akan atur waktu konsultasi singkat 🙏"""
 
 
 def followup_d3(username: str, wa_number: str) -> str:
     return f"""Halo {username}!
 
-Kami PPBIB kembali menyapa 🙏
+PPBIB kembali menyapa 🙏
 
-Kuota batch berikutnya sudah hampir penuh!
+Sekedar info — slot pelatihan koki batch ini *hampir penuh*. Kami batasi maks 10 peserta agar praktik bisa optimal dan semua mendapat perhatian langsung dari instruktur.
 
-Jika kamu masih tertarik dan ingin info lebih detail, langsung chat kami via WhatsApp:
+Yang sudah konfirmasi akan dapat:
+🎁 Indukan koki PPBIB (1 pasang) — senilai Rp 750rb–1,5jt
+🐟 Program tampung benih 3 bulan di fasilitas kami
+
+Kalau kamu serius, langsung chat kami via WhatsApp sekarang:
 👉 wa.me/{wa_number}
 
-Kami akan bantu proses pendaftaran kamu dengan mudah dan cepat ✨"""
+Kami bantu proses pendaftaran dalam 5 menit ✨"""
 
 
 def followup_d7(username: str, wa_number: str) -> str:
@@ -67,11 +120,13 @@ def followup_d7(username: str, wa_number: str) -> str:
 
 Ini pesan terakhir dari kami 😊
 
-Kami ingin memastikan kamu tidak melewatkan kesempatan bergabung di pelatihan PPBIB.
+Batch pelatihan koki PPBIB bulan ini *segera tutup pendaftaran*.
 
-🎁 Khusus yang daftar minggu ini: ada bonus materi eksklusif!
+Setelah batch ini penuh, batch berikutnya belum tentu ada bonus indukan — karena stok terbatas dari koleksi PPBIB.
 
-Daftar sekarang via WhatsApp:
+Kalau kamu tidak ingin melewatkan kesempatan ini:
 👉 wa.me/{wa_number}
 
-Atau balas pesan ini jika ada yang ingin ditanyakan 🙏"""
+Atau cukup balas "DAFTAR" di sini dan kami proses segera.
+
+Kalau memang belum waktunya, tidak apa-apa — kami tetap simpan kontakmu untuk batch berikutnya 🙏"""

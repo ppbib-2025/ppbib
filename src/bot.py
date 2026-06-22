@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from src.tiktok_api import get_my_videos, get_comments, reply_comment
 from src.crm import add_lead, update_status, get_leads_by_status
-from templates.funnel import is_interested, reply_komentar, followup_d1, followup_d3, followup_d7
+from templates.funnel import is_interested, is_koki_specific, reply_komentar, followup_d1, followup_d3, followup_d7
 
 REPLIED_FILE = "data/replied_comments.txt"
 
@@ -43,11 +43,12 @@ def scan_and_reply():
             username = comment.get("username", "user")
 
             if is_interested(text):
-                print(f"  → Komentar berminat dari @{username}: {text[:50]}")
-                reply = reply_komentar(username)
+                koki = is_koki_specific(text)
+                print(f"  → Komentar berminat dari @{username} [koki={koki}]: {text[:50]}")
+                reply = reply_komentar(username, is_koki=koki)
                 reply_comment(video_id, cid, reply)
                 mark_replied(cid)
-                add_lead(username, video_id, text)
+                add_lead(username, video_id, text, lead_source="koki" if koki else "organik")
                 print(f"  ✓ Reply terkirim, lead disimpan.")
 
     print("Scan selesai.")

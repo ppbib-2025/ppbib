@@ -18,7 +18,8 @@ def save_leads(leads: dict):
         json.dump(leads, f, indent=2, ensure_ascii=False)
 
 
-def add_lead(username: str, source_video: str, comment: str):
+def add_lead(username: str, source_video: str, comment: str,
+             lead_source: str = "organik", tier: str = ""):
     leads = load_leads()
     if username not in leads:
         leads[username] = {
@@ -26,12 +27,14 @@ def add_lead(username: str, source_video: str, comment: str):
             "source_video": source_video,
             "comment": comment,
             "status": "new",          # new → dm_sent → followup_d1 → d3 → d7 → closed
+            "lead_source": lead_source,   # organik | koki | webinar | ads
+            "tier": tier,                 # reguler | premium | vip (diisi saat konfirmasi)
             "created_at": datetime.now().isoformat(),
             "last_contact": datetime.now().isoformat(),
             "notes": "",
         }
         save_leads(leads)
-        print(f"[CRM] Lead baru: {username}")
+        print(f"[CRM] Lead baru: {username} (source={lead_source})")
     return leads[username]
 
 
