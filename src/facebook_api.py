@@ -6,7 +6,7 @@ Tidak perlu auth tambahan jika Instagram sudah di-setup.
 import requests
 from src.instagram_auth import load_token
 
-BASE = "https://graph.facebook.com/v19.0"
+BASE = "https://graph.facebook.com/v23.0"
 
 
 def _access_token() -> str:

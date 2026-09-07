@@ -113,7 +113,10 @@ def collect_instagram_metrics() -> list:
             "impressions": insights.get("impressions", 0),
             "reach": insights.get("reach", 0),
             "saved": insights.get("saved", 0),
-            "video_views": insights.get("video_views", 0),
+            "video_views": insights.get("video_views", insights.get("views", 0)),
+            "views": insights.get("views", 0),
+            "likes": insights.get("likes", 0),
+            "shares": insights.get("shares", 0),
         })
     _save(IG_ANALYTICS_FILE, history)
     print(f"[Analytics] Instagram: {len(posts)} post disimpan.")
