@@ -335,6 +335,68 @@ def messenger_webhook():
         return {"status": "error", "reason": str(e)}, 500
 
 
+# ── Facebook Login OAuth (jalur A: Pages + Messenger) ─────────
+
+FB_SCOPES = "pages_show_list,pages_read_engagement,pages_messaging,instagram_basic,instagram_manage_insights"
+
+
+@app.route("/webhook/fb-connect")
+def fb_connect():
+    """Mulai OAuth Facebook Login dengan scope eksplisit."""
+    import os
+    from urllib.parse import urlencode
+
+    app_id = os.getenv("INSTAGRAM_APP_ID", "")
+    redirect_uri = os.getenv("INSTAGRAM_REDIRECT_URI", "")
+    if not app_id or not redirect_uri:
+        return "Konfigurasi OAuth belum lengkap di server.", 503
+    params = {
+        "client_id": app_id,
+        "redirect_uri": redirect_uri,
+        "scope": FB_SCOPES,
+        "response_type": "code",
+        "state": "ppbib_fb_auth",
+    }
+    return redirect("https://www.facebook.com/v23.0/dialog/oauth?" + urlencode(params))
+
+
+@app.route("/webhook/fb-callback")
+def fb_callback():
+    """Terima code OAuth, tukar jadi long-lived token, simpan."""
+    import os
+    import json as _json
+    import requests as _rq
+    from datetime import datetime as _dt
+
+    if request.args.get("error"):
+        return f"Facebook authorization gagal: {request.args.get('error_description', request.args['error'])}", 400
+    code = request.args.get("code")
+    if not code or request.args.get("state") != "ppbib_fb_auth":
+        return "Authorization tidak valid. Mulai ulang dari /webhook/fb-connect.", 400
+
+    app_id = os.getenv("INSTAGRAM_APP_ID", "")
+    secret = os.getenv("INSTAGRAM_APP_SECRET", "")
+    redirect = os.getenv("INSTAGRAM_REDIRECT_URI", "")
+    r = _rq.get("https://graph.facebook.com/v23.0/oauth/access_token", params={
+        "client_id": app_id, "client_secret": secret,
+        "redirect_uri": redirect, "code": code,
+    }).json()
+    if "access_token" not in r:
+        return f"Gagal tukar code: {r}", 400
+    long_r = _rq.get("https://graph.facebook.com/v23.0/oauth/access_token", params={
+        "grant_type": "fb_exchange_token", "client_id": app_id,
+        "client_secret": secret, "fb_exchange_token": r["access_token"],
+    }).json()
+    if "access_token" not in long_r:
+        return f"Gagal perpanjang token: {long_r}", 400
+    os.makedirs("data/tokens", exist_ok=True)
+    with open("data/tokens/fb_token.json", "w") as f:
+        _json.dump({"access_token": long_r["access_token"],
+                     "login_type": "facebook_login",
+                     "saved_at": _dt.now().isoformat()}, f, indent=2)
+    return "Facebook berhasil terhubung. Token tersimpan di server; halaman ini boleh ditutup."
+
+
 @app.route("/leads")
 def leads_page():
     """Lihat semua lead yang masuk."""
